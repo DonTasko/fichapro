@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
             contentResolver.openOutputStream(uri)?.use { it.write(pending.second) }
             resolve(pending.first, true)
         } catch (e: Exception) {
-            reject(pending.first, e.message ?: "Erro ao gravar")
+            reject(pending.first, e.message ?: getString(R.string.save_error))
         }
     }
 

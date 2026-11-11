@@ -137,7 +137,7 @@ Views.ingredientes = (el) => {
 function ingredientForm(ing, after) {
   const st = getSettings();
   const isNew = !ing;
-  const i = ing ? U.clone(ing) : { purchaseUnit: 'kg', purchaseQty: 1, price: null, vat: 6, priceIncludesVat: false, wastePct: 0, allergens: [], traces: [], priceUpdatedAt: U.todayISO() };
+  const i = ing ? U.clone(ing) : { purchaseUnit: 'kg', purchaseQty: 1, price: null, vat: countryInfo().purchaseVat, priceIncludesVat: false, wastePct: 0, allergens: [], traces: [], priceUpdatedAt: U.todayISO() };
   const ings = Repo.all('ingredients');
   const cats = [...new Set([...st.ingredientCategories, ...ings.map((x) => x.category).filter(Boolean)])].sort();
   const sups = [...new Set(ings.map((x) => x.supplier).filter(Boolean))].sort();
@@ -159,7 +159,7 @@ function ingredientForm(ing, after) {
         <div class="field emb"><label>Conteúdo de cada embalagem *</label>${numInput('packQty', i.packQty)}</div>
         <div class="field emb"><label>Unidade do conteúdo</label><select name="packUnit">${options(Object.keys(UNITS).map((u) => [u, UNITS[u].label]), i.packUnit || 'kg')}</select></div>
         <div class="field"><label>Preço de compra (total) *</label>${numInput('price', i.price)}<span class="hint">Valor pago pela quantidade indicada</span></div>
-        <div class="field"><label>IVA da compra (%)</label>${numInput('vat', i.vat, 'list="dl-vat"')}<datalist id="dl-vat"><option value="6"><option value="13"><option value="23"><option value="0"></datalist></div>
+        <div class="field"><label>IVA da compra (%)</label>${numInput('vat', i.vat, 'list="dl-vat"')}<datalist id="dl-vat">${(VAT_RATES[getSettings().country] || []).map((r) => `<option value="${U.inNum(r)}">`).join('')}</datalist></div>
         <div class="field"><label>&nbsp;</label><label class="check"><input type="checkbox" name="priceIncludesVat" ${i.priceIncludesVat ? 'checked' : ''}> O preço inclui IVA</label></div>
         <div class="field"><label>Data da última atualização</label><input type="date" name="priceUpdatedAt" value="${h(i.priceUpdatedAt || '')}"></div>
       </div>
@@ -228,7 +228,7 @@ function ingredientHistory(ing) {
   const pts = hist.length ? [{ date: ing.createdAt || hist[0].date, value: hist[0].oldUnitCost }, ...hist.map((x) => ({ date: x.date, value: x.newUnitCost }))] : [];
   if (pts.length > 1 && new Date(pts[0].date) >= new Date(pts[1].date)) pts[0].date = new Date(new Date(pts[1].date).getTime() - 86400000).toISOString();
   const bl = IngUI.baseLabel(ing);
-  modal({ title: 'Histórico de preços — ' + ing.name, size: 'wide', body: `
+  modal({ title: tr('Histórico de preços') + ' — ' + ing.name, size: 'wide', body: `
     ${lineChart(pts)}
     ${hist.length ? `<div class="table-wrap"><table><thead><tr><th>Data</th><th class="r">Custo anterior</th><th class="r">Custo novo</th><th class="r">Diferença</th><th>Origem</th><th>Impacto nas fichas (custo por dose)</th></tr></thead><tbody>${hist.slice().reverse().map((x) => `<tr><td class="nowrap">${U.fmtDateTime(x.date)}</td><td class="r">${U.eur4(x.oldUnitCost)}/${h(bl)}</td><td class="r">${U.eur4(x.newUnitCost)}/${h(bl)}</td><td class="r ${diffCls(x.diffPct)}">${signPct(x.diffPct)}</td><td class="small">${h(x.source || '')}</td><td class="small">${x.impacts.length ? x.impacts.map((im) => `${h(im.recipeName)}: ${U.eur(im.oldDose)} → <b>${U.eur(im.newDose)}</b> <span class="${diffCls(im.newDose - im.oldDose)}">(${signEur(im.newDose - im.oldDose)})</span>`).join('<br>') : '—'}</td></tr>`).join('')}</tbody></table></div>` : '<div class="empty">Sem alterações de preço registadas.</div>'}` });
 }
@@ -236,11 +236,11 @@ function ingredientUsage(ing) {
   const data = dataView();
   const u = Calc.usages(data, 'ing', ing.id);
   const ev = Calc.evaluator(data);
-  modal({ title: 'Fichas que usam — ' + ing.name, body: u.all.length ? `<div class="table-wrap"><table><thead><tr><th>Ficha técnica</th><th>Utilização</th><th class="r">Custo/dose</th></tr></thead><tbody>${u.all.map((id) => { const r = data.recipes.get(id); return `<tr><td><a href="#/ficha/${id}" data-close>${h(r.name)}</a></td><td>${u.direct.includes(id) ? 'Direta' : 'Via preparação intermédia'}</td><td class="r">${U.eur(ev.cost(r).perDose.total)}</td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty">Este ingrediente não é usado em nenhuma ficha.</div>' });
+  modal({ title: tr('Fichas que usam') + ' — ' + ing.name, body: u.all.length ? `<div class="table-wrap"><table><thead><tr><th>Ficha técnica</th><th>Utilização</th><th class="r">Custo/dose</th></tr></thead><tbody>${u.all.map((id) => { const r = data.recipes.get(id); return `<tr><td><a href="#/ficha/${id}" data-close>${h(r.name)}</a></td><td>${u.direct.includes(id) ? 'Direta' : 'Via preparação intermédia'}</td><td class="r">${U.eur(ev.cost(r).perDose.total)}</td></tr>`; }).join('')}</tbody></table></div>` : '<div class="empty">Este ingrediente não é usado em nenhuma ficha.</div>' });
 }
 async function deleteIngredient(ing, after) {
   const u = Calc.usages(dataView(), 'ing', ing.id);
-  if (u.direct.length) { modal({ title: 'Não é possível eliminar', size: 'small', body: `<p><b>${h(ing.name)}</b> é usado em ${u.direct.length} ficha(s): ${u.direct.map((id) => h(Repo.get('recipes', id).name)).join(', ')}.</p><p>Remova-o dessas fichas primeiro.</p>` }); return; }
+  if (u.direct.length) { modal({ title: 'Não é possível eliminar', size: 'small', body: `<p><b>${h(ing.name)}</b> é usado em ${u.direct.length} ficha(s): <span data-notr>${u.direct.map((id) => h(Repo.get('recipes', id).name)).join(', ')}</span>.</p><p>Remova-o dessas fichas primeiro.</p>` }); return; }
   if (!(await confirmDlg(`Eliminar <b>${h(ing.name)}</b>? O histórico de preços também será eliminado.`, { ok: 'Eliminar', danger: true }))) return;
   await Repo.removeMany('priceHistory', Repo.all('priceHistory').filter((x) => x.ingredientId === ing.id).map((x) => x.id));
   await Repo.remove('ingredients', ing.id);
@@ -249,22 +249,22 @@ async function deleteIngredient(ing, after) {
 
 /* ------------------------------ 3. IMPORTAÇÃO ------------------------------ */
 const IMPORT_FIELDS = [
-  { key: 'code', label: 'Código interno', syn: ['codigo', 'cod', 'ref', 'referencia', 'sku', 'artigo'] },
-  { key: 'name', label: 'Nome do ingrediente *', syn: ['nome', 'ingrediente', 'descricao', 'designacao', 'produto', 'materia prima', 'artigo descricao'] },
-  { key: 'category', label: 'Categoria', syn: ['categoria', 'familia', 'grupo', 'tipo'] },
-  { key: 'supplier', label: 'Fornecedor', syn: ['fornecedor', 'marca', 'distribuidor'] },
-  { key: 'purchaseUnit', label: 'Unidade de compra', syn: ['unidade', 'un', 'unid', 'unidade compra', 'medida'] },
-  { key: 'purchaseQty', label: 'Quantidade comprada', syn: ['quantidade', 'qtd', 'qtde', 'quant', 'quantidade comprada'] },
-  { key: 'packQty', label: 'Conteúdo da embalagem', syn: ['conteudo', 'conteudo embalagem', 'peso embalagem', 'capacidade', 'formato'] },
-  { key: 'packUnit', label: 'Unidade do conteúdo', syn: ['unidade conteudo', 'unidade embalagem'] },
-  { key: 'price', label: 'Preço de compra (total)', syn: ['preco', 'preco compra', 'valor', 'custo', 'preco total', 'pvp', 'preco s iva', 'preco sem iva'] },
-  { key: 'unitPrice', label: 'Preço por kg/L/un', syn: ['preco kg', 'preco por kg', 'preco unitario', 'preco litro', 'eur kg', 'preco unidade', 'custo unitario'] },
-  { key: 'vat', label: 'IVA (%)', syn: ['iva', 'taxa iva', 'iva %', 'imposto'] },
-  { key: 'priceIncludesVat', label: 'Preço inclui IVA (sim/não)', syn: ['inclui iva', 'com iva', 'iva incluido'] },
-  { key: 'wastePct', label: 'Desperdício (%)', syn: ['desperdicio', 'perda', 'quebra', 'desp'] },
-  { key: 'yieldPct', label: 'Rendimento (%)', syn: ['rendimento', 'aproveitamento', 'rend'] },
-  { key: 'allergens', label: 'Alergénios', syn: ['alergenios', 'alergenos', 'alergias'] },
-  { key: 'priceUpdatedAt', label: 'Data de atualização', syn: ['data', 'data atualizacao', 'atualizado', 'data preco'] },
+  { key: 'code', label: 'Código interno', syn: ['codigo', 'cod', 'ref', 'referencia', 'sku', 'artigo', 'codigo', 'code', 'cod', 'ref', 'reference', 'referencia', 'sku', 'item code', 'product code'] },
+  { key: 'name', label: 'Nome do ingrediente *', syn: ['nome', 'ingrediente', 'descricao', 'designacao', 'produto', 'materia prima', 'artigo descricao', 'nombre', 'producto', 'ingrediente', 'descripcion', 'articulo', 'nom', 'produit', 'designation', 'libelle', 'name', 'product', 'ingredient', 'description', 'item'] },
+  { key: 'category', label: 'Categoria', syn: ['categoria', 'familia', 'grupo', 'tipo', 'categoria', 'familia', 'categorie', 'famille', 'category', 'family', 'group'] },
+  { key: 'supplier', label: 'Fornecedor', syn: ['fornecedor', 'marca', 'distribuidor', 'proveedor', 'marca', 'fournisseur', 'marque', 'supplier', 'vendor', 'brand'] },
+  { key: 'purchaseUnit', label: 'Unidade de compra', syn: ['unidade', 'un', 'unid', 'unidade compra', 'medida', 'unidad', 'medida', 'unite', 'unit', 'uom', 'unit of measure'] },
+  { key: 'purchaseQty', label: 'Quantidade comprada', syn: ['quantidade', 'qtd', 'qtde', 'quant', 'quantidade comprada', 'cantidad', 'cant', 'quantite', 'qte', 'quantity', 'qty'] },
+  { key: 'packQty', label: 'Conteúdo da embalagem', syn: ['conteudo', 'conteudo embalagem', 'peso embalagem', 'capacidade', 'formato', 'contenido', 'contenido envase', 'contenu', 'pack size', 'size', 'content'] },
+  { key: 'packUnit', label: 'Unidade do conteúdo', syn: ['unidade conteudo', 'unidade embalagem', 'unidad contenido', 'unite contenu', 'pack unit'] },
+  { key: 'price', label: 'Preço de compra (total)', syn: ['preco', 'preco compra', 'valor', 'custo', 'preco total', 'pvp', 'preco s iva', 'preco sem iva', 'precio', 'precio compra', 'importe', 'coste', 'prix', 'prix achat', 'cout', 'montant', 'price', 'cost', 'purchase price', 'net price'] },
+  { key: 'unitPrice', label: 'Preço por kg/L/un', syn: ['preco kg', 'preco por kg', 'preco unitario', 'preco litro', 'eur kg', 'preco unidade', 'custo unitario', 'precio kg', 'precio por kg', 'precio unitario', 'prix kg', 'prix au kg', 'prix unitaire', 'price per kg', 'unit price', 'price kg'] },
+  { key: 'vat', label: 'IVA (%)', syn: ['iva', 'taxa iva', 'iva %', 'imposto', 'iva', 'tva', 'vat', 'tax', 'tipo iva', 'taux tva', 'vat rate'] },
+  { key: 'priceIncludesVat', label: 'Preço inclui IVA (sim/não)', syn: ['inclui iva', 'com iva', 'iva incluido', 'iva incluido', 'con iva', 'ttc', 'tva incluse', 'inc vat', 'vat included', 'including vat'] },
+  { key: 'wastePct', label: 'Desperdício (%)', syn: ['desperdicio', 'perda', 'quebra', 'desp', 'merma', 'desperdicio', 'perte', 'dechet', 'waste', 'wastage'] },
+  { key: 'yieldPct', label: 'Rendimento (%)', syn: ['rendimento', 'aproveitamento', 'rend', 'rendimiento', 'aprovechamiento', 'rendement', 'yield'] },
+  { key: 'allergens', label: 'Alergénios', syn: ['alergenios', 'alergenos', 'alergias', 'alergenos', 'alergenos', 'allergenes', 'allergens'] },
+  { key: 'priceUpdatedAt', label: 'Data de atualização', syn: ['data', 'data atualizacao', 'atualizado', 'data preco', 'fecha', 'fecha actualizacion', 'date', 'date mise a jour', 'updated', 'last updated'] },
 ];
 const Importer = { rows: null, sheets: null, header: true, map: {}, items: [], source: '' };
 function autoMap(headers) {
@@ -298,7 +298,7 @@ function rowToIngredient(row, map, settings) {
     packQty = U.parseNum(g('packQty')); packUnit = parseUnit(g('packUnit')) || 'kg';
     if (!(packQty > 0)) errs.push('Embalagem sem conteúdo');
   }
-  const vatRaw = g('vat'); let vat = vatRaw !== undefined && String(vatRaw).trim() !== '' ? U.parseNum(vatRaw) : 6;
+  const vatRaw = g('vat'); let vat = vatRaw !== undefined && String(vatRaw).trim() !== '' ? U.parseNum(vatRaw) : countryInfo().purchaseVat;
   if (U.ok(vat) && vat > 0 && vat < 1) vat = vat * 100;
   if (!U.ok(vat) || vat < 0 || vat > 100) { errs.push('IVA inválido'); vat = 0; }
   const incRaw = U.normalize(g('priceIncludesVat'));
@@ -410,7 +410,7 @@ Views.importacao = (el) => {
       <td class="r"><input class="num" data-f="vat" value="${h(U.inNum(g.vat))}" style="width:46px"></td>
       <td class="r"><input class="num" data-f="wastePct" value="${h(U.inNum(g.wastePct))}" style="width:46px"></td>
       <td>${algList(g.allergens)}</td><td class="small nowrap">${U.fmtDate(g.priceUpdatedAt)}</td>
-      <td class="small">${it.errs.length ? `<span class="red">${h(it.errs.join('; '))}</span>` : '<span class="green-t">OK</span>'}${ex ? `<div class="amber-t">Já existe: ${h(ex.name)}${ex.demo ? ' (demo — passará a registo real se atualizar)' : ''}</div>` : ''}${it.dupInFile !== null ? `<div class="amber-t">Repetido na linha ${it.dupInFile + 1}</div>` : ''}</td></tr>`; }).join('')}
+      <td class="small">${it.errs.length ? `<span class="red">${h(it.errs.join('; '))}</span>` : '<span class="green-t">OK</span>'}${ex ? `<div class="amber-t">${tr('Já existe')}: ${h(ex.name)}${ex.demo ? ' (demo — passará a registo real se atualizar)' : ''}</div>` : ''}${it.dupInFile !== null ? `<div class="amber-t">Repetido na linha ${it.dupInFile + 1}</div>` : ''}</td></tr>`; }).join('')}
     </tbody></table></div>
     <div class="toolbar" style="margin-top:12px"><button class="btn" id="impBack2">← Associação de colunas</button><span class="grow"></span><button class="btn green" id="impGo">Importar ${count('create') + count('update')} ingrediente(s)</button></div></div>`;
   const revalidate = (i) => {

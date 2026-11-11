@@ -8,7 +8,7 @@ Views.alergenios = (el) => {
   const all = computeAll().sort((a, b) => a.r.name.localeCompare(b.r.name, 'pt'));
   const ings = Repo.all('ingredients');
   el.innerHTML = `<div class="alert warn">A identificação automática é um apoio baseado nos ingredientes cadastrados. Confirme sempre os alergénios em cada ficha. A aplicação não pode garantir a ausência de alergénios.</div>
-    <div class="card"><div class="card-h"><h3>Legenda (Regulamento UE n.º 1169/2011, Anexo II)</h3></div>
+    <div class="card"><div class="card-h"><h3>${h(tr('Legenda'))} (${h(countryInfo().law)})</h3></div>
       <div class="grid g4" style="gap:6px">${ALLERGENS.map((a) => `<div class="alg-big">${algBadge(a.id)}<span class="small">${h(a.name)}</span></div>`).join('')}</div>
       <div class="small muted" style="margin-top:8px">Círculo cheio = contém · círculo tracejado = pode conter (contaminação cruzada)</div></div>
     <div class="card"><div class="toolbar"><input class="search" id="aq" placeholder="Pesquisar ficha…" value="${h(AlgUI.q)}">
@@ -16,12 +16,12 @@ Views.alergenios = (el) => {
       <select id="afil">${options(ALLERGENS.map((a) => [a.id, 'Sem ' + a.short]), AlgUI.filter || '', { empty: 'Filtrar: sem alergénio…' })}</select>
       <span class="grow"></span><button class="btn" id="aexp">⤓ Excel</button><button class="btn primary" id="aprint">Imprimir ficha para clientes</button></div>
       <div id="amat"></div></div>
-    <div class="card"><div class="card-h"><h3>Ingredientes por alergénio</h3></div><div class="grid g2">${ALLERGENS.map((a) => { const list = ings.filter((i) => (i.allergens || []).includes(a.id)); const tr = ings.filter((i) => (i.traces || []).includes(a.id)); return `<div><b>${algBadge(a.id)} ${h(a.name)}</b><div class="small">${list.length ? list.map((i) => h(i.name)).join(', ') : '<span class="muted">nenhum ingrediente</span>'}${tr.length ? `<div class="muted">Pode conter: ${tr.map((i) => h(i.name)).join(', ')}</div>` : ''}</div></div>`; }).join('')}</div></div>`;
+    <div class="card"><div class="card-h"><h3>Ingredientes por alergénio</h3></div><div class="grid g2">${ALLERGENS.map((a) => { const list = ings.filter((i) => (i.allergens || []).includes(a.id)); const trl = ings.filter((i) => (i.traces || []).includes(a.id)); return `<div><b>${algBadge(a.id)} ${h(a.name)}</b><div class="small">${list.length ? list.map((i) => h(i.name)).join(', ') : '<span class="muted">nenhum ingrediente</span>'}${trl.length ? `<div class="muted">Pode conter: <span data-notr>${trl.map((i) => h(i.name)).join(', ')}</span></div>` : ''}</div></div>`; }).join('')}</div></div>`;
   const filtered = () => { const q = U.normalize(AlgUI.q); return all.filter((x) => (!q || U.normalize(x.r.name).includes(q)) && (!AlgUI.only || (AlgUI.only === 'venda' ? x.r.sellable !== false : AlgUI.only === 'inter' ? x.r.intermediate : !x.c.allergens.confirmed)) && (!AlgUI.filter || (!x.c.allergens.present.includes(AlgUI.filter) && !x.c.allergens.traces.includes(AlgUI.filter)))); };
   const draw = () => {
     const list = filtered();
     $('#amat', el).innerHTML = list.length ? `<div class="table-wrap"><table class="matrix"><thead><tr><th>Ficha técnica</th>${ALLERGENS.map((a) => `<th class="c" title="${h(a.name)}">${algBadge(a.id)}</th>`).join('')}<th>Confirmado</th></tr></thead><tbody>
-      ${list.map((x) => `<tr><td><a href="#/ficha/${x.r.id}">${h(x.r.name)}</a>${demoTag(x.r)}</td>${ALLERGENS.map((a) => { const p = x.c.allergens.present.includes(a.id), t = x.c.allergens.traces.includes(a.id); const src = p ? (x.c.allergens.sources[a.id] || ['manual']).join(', ') : t ? 'Pode conter: ' + (x.c.allergens.traceSources[a.id] || ['manual']).join(', ') : ''; return `<td class="c">${p ? algBadge(a.id, false, a.name + ' — ' + src) : t ? algBadge(a.id, true, src) : ''}</td>`; }).join('')}<td>${x.c.allergens.confirmed ? '<span class="badge green">Sim</span>' : '<span class="badge amber">Não</span>'}</td></tr>`).join('')}
+      ${list.map((x) => `<tr><td><a href="#/ficha/${x.r.id}">${h(x.r.name)}</a>${demoTag(x.r)}</td>${ALLERGENS.map((a) => { const p = x.c.allergens.present.includes(a.id), t = x.c.allergens.traces.includes(a.id); const src = p ? (x.c.allergens.sources[a.id] || ['manual']).join(', ') : t ? tr('Pode conter') + ': ' + (x.c.allergens.traceSources[a.id] || ['manual']).join(', ') : ''; return `<td class="c">${p ? algBadge(a.id, false, tr(a.name) + ' — ' + src) : t ? algBadge(a.id, true, src) : ''}</td>`; }).join('')}<td>${x.c.allergens.confirmed ? '<span class="badge green">Sim</span>' : '<span class="badge amber">Não</span>'}</td></tr>`).join('')}
       </tbody></table></div><div class="small muted" style="margin-top:6px">Passe o rato sobre um símbolo para ver os ingredientes responsáveis.</div>` : '<div class="empty">Sem fichas para mostrar.</div>';
   };
   $('#aq', el).oninput = (e) => { AlgUI.q = e.target.value; draw(); };
@@ -127,7 +127,7 @@ Views.custos = (el) => {
   $('#iinP', el).onchange = async (e) => { await saveSettings({ indirect: { ...ind, includesPackaging: e.target.checked } }); re(); };
   $('#eqNew', el).onclick = () => equipForm(null, re);
   $$('[data-eq]', el).forEach((b) => (b.onclick = () => equipForm(Repo.get('equipment', b.dataset.eq), re)));
-  $$('[data-eqdel]', el).forEach((b) => (b.onclick = async () => { const e = Repo.get('equipment', b.dataset.eqdel); const used = Repo.all('recipes').filter((r) => (r.equipment || []).some((x) => x.equipId === e.id)); if (used.length) { modal({ title: 'Não é possível eliminar', size: 'small', body: `<p>${h(e.name)} é usado em: ${used.map((r) => h(r.name)).join(', ')}.</p>` }); return; } if (await confirmDlg(`Eliminar ${h(e.name)}?`, { danger: true, ok: 'Eliminar' })) { await Repo.remove('equipment', e.id); re(); } }));
+  $$('[data-eqdel]', el).forEach((b) => (b.onclick = async () => { const e = Repo.get('equipment', b.dataset.eqdel); const used = Repo.all('recipes').filter((r) => (r.equipment || []).some((x) => x.equipId === e.id)); if (used.length) { modal({ title: 'Não é possível eliminar', size: 'small', body: `<p><b>${h(e.name)}</b> é usado em: <span data-notr>${used.map((r) => h(r.name)).join(', ')}</span>.</p>` }); return; } if (await confirmDlg(`Eliminar ${h(e.name)}?`, { danger: true, ok: 'Eliminar' })) { await Repo.remove('equipment', e.id); re(); } }));
   $('#opNew', el).onclick = async () => { await Repo.save('opcosts', { id: U.uid(), type: 'outros', name: 'Novo custo', monthly: 0, include: true }); re(); };
   $$('tr[data-op]', el).forEach((tr) => {
     const o = Repo.get('opcosts', tr.dataset.op);
@@ -183,7 +183,7 @@ Views.simulador = (el) => {
       ${a.kind === 'cat' ? `<select data-af="ref">${options(cats, a.ref)}</select>` : a.kind === 'ing' ? `<select data-af="ref">${options(ings.map((x) => [x.id, x.name]), a.ref)}</select>` : ''}
       <input class="num" data-af="pct" value="${h(U.inNum(a.pct))}" style="width:80px"> % <button class="btn sm danger" data-adel>✕</button></div>`).join('')}</div>
     <button class="btn sm" id="adjAdd">+ Adicionar variação</button> <span class="small muted">ex.: Carnes +15 %</span>
-    ${scopeRec ? `<div class="sep"></div><h4>Alterar quantidades em "${h(scopeRec.name)}"</h4><div class="table-wrap"><table><thead><tr><th>Ingrediente</th><th class="r">Qtd. atual</th><th class="r">Variação %</th></tr></thead><tbody>${scopeRec.lines.map((l) => { const nm = l.kind === 'rec' ? (Repo.get('recipes', l.refId) || {}).name : (Repo.get('ingredients', l.refId) || {}).name; const q = Sim.qty.find((x) => x.lineId === l.id); return `<tr><td>${h(nm || '?')}</td><td class="r">${U.numMax(Number(l.qty))} ${h(l.unit)}</td><td class="r"><input class="num" data-ql="${l.id}" value="${h(U.inNum(q ? q.pct : 0))}" style="width:80px"></td></tr>`; }).join('')}</tbody></table></div>` : ''}
+    ${scopeRec ? `<div class="sep"></div><h4>${tr('Alterar quantidades em')} "${h(scopeRec.name)}"</h4><div class="table-wrap"><table><thead><tr><th>Ingrediente</th><th class="r">Qtd. atual</th><th class="r">Variação %</th></tr></thead><tbody>${scopeRec.lines.map((l) => { const nm = l.kind === 'rec' ? (Repo.get('recipes', l.refId) || {}).name : (Repo.get('ingredients', l.refId) || {}).name; const q = Sim.qty.find((x) => x.lineId === l.id); return `<tr><td>${h(nm || '?')}</td><td class="r">${U.numMax(Number(l.qty))} ${h(l.unit)}</td><td class="r"><input class="num" data-ql="${l.id}" value="${h(U.inNum(q ? q.pct : 0))}" style="width:80px"></td></tr>`; }).join('')}</tbody></table></div>` : ''}
     </div><div class="card"><div class="card-h"><h3>Impacto</h3></div><div id="simRes"></div></div>`;
   const ctx = () => {
     const adj = Sim.adj.filter((a) => U.ok(a.pct) && a.pct !== 0);
@@ -223,7 +223,11 @@ Views.simulador = (el) => {
 /* ------------------------------ 11. CONFIGURAÇÕES ------------------------------ */
 Views.configuracoes = (el) => {
   const st = getSettings();
-  el.innerHTML = `<div class="grid g2" style="align-items:start"><div class="card" id="acct"></div><div class="card" id="plan"></div></div><div class="grid g2">
+  el.innerHTML = `<div class="card"><div class="card-h"><h3>Língua e país</h3></div><div class="fields">
+      <div class="field"><label>Língua da aplicação (neste dispositivo)</label><select id="cfgLang" data-notr>${options(Object.entries(I18N.LANGS), I18N.lang)}</select></div>
+      <div class="field"><label>País do estabelecimento</label><select id="cfgCountry" data-notr>${options(Object.entries(COUNTRIES).map(([k, c]) => [k, c.name]), st.country)}</select><span class="hint">Define moeda, formato dos números, taxas de imposto predefinidas e a lei de alergénios citada.</span></div>
+      <div class="field"><label>Moeda</label><input disabled value="${h(countryInfo().currency)}"></div></div></div>
+    <div class="grid g2" style="align-items:start"><div class="card" id="acct"></div><div class="card" id="plan"></div></div><div class="grid g2">
     <div class="card"><div class="card-h"><h3>Negócio e preços</h3></div><form id="cfg"><div class="fields">
       <div class="field" style="grid-column:1/-1"><label>Nome do estabelecimento (aparece nos relatórios)</label><input name="businessName" value="${h(st.businessName)}"></div>
       <div class="field"><label>Food Cost pretendido padrão (%)</label>${numInput('targetFC', st.targetFC)}</div>
@@ -251,6 +255,19 @@ Views.configuracoes = (el) => {
       <div class="toolbar"><button class="btn green" id="demoLoad">Carregar demonstração</button><button class="btn danger" id="demoDel" ${Demo.has() ? '' : 'disabled'}>Eliminar dados de demonstração</button></div>
       <div class="sep"></div><h4>Zona de perigo</h4><button class="btn danger" id="wipe">Apagar todos os dados</button></div></div>`;
   renderAccountCard($('#acct', el));
+  $('#cfgLang', el).onchange = (e) => { I18N.setLang(e.target.value); location.reload(); };
+  $('#cfgCountry', el).onchange = async (e) => {
+    const to = e.target.value, from = st.country;
+    const c = COUNTRIES[to];
+    if (!(await confirmDlg(`<span data-notr>${h(tr('Mudar o país para'))} <b>${h(tr(c.name))}</b>${h(tr('? As categorias de venda e as taxas de imposto passam a ser as predefinidas desse país (moeda: EUR). As fichas mantêm a categoria correspondente. Confirme as taxas com o seu contabilista.').replace('EUR', c.currency))}</span>`, { ok: 'Mudar país' }))) { e.target.value = from; return; }
+    const oldCats = st.saleCategories, newCats = c.cats.map(([name, vat]) => ({ name, vat }));
+    for (const r of Repo.all('recipes')) {
+      const i = oldCats.findIndex((x) => x.name === r.category);
+      if (i >= 0 && newCats[i] && newCats[i].name !== r.category) await Repo.save('recipes', { ...r, category: newCats[i].name });
+    }
+    await saveSettings({ country: to, saleCategories: newCats, defaultSaleVat: c.defaultSaleVat, roundingEndings: c.rounding });
+    applyCountry(); toast('País alterado', 'ok'); route(true);
+  };
   renderPlanCard($('#plan', el));
   $('#cfgSave', el).onclick = async () => {
     const v = readForm($('#cfg', el)); const bad = [];

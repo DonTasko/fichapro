@@ -1,0 +1,5 @@
+<resources>
+    <string name="save_cancelled">Guardado cancelado</string>
+    <string name="no_browser">No se pudo abrir el enlace</string>
+    <string name="save_error">No se pudo guardar el archivo</string>
+</resources>

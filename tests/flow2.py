@@ -7,7 +7,7 @@ def check(c,m):
 async def main():
   async with async_playwright() as p:
     b=await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
-    pg=await b.new_page(viewport={'width':1300,'height':900}); await pg.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"')"); errs=[]
+    pg=await b.new_page(viewport={'width':1300,'height':900}); await pg.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"');localStorage.getItem('fp_lang')||localStorage.setItem('fp_lang','pt')"); errs=[]
     pg.on('pageerror', lambda e: errs.append(str(e)))
     await pg.goto(URL); await pg.wait_for_timeout(1200)
     ev=pg.evaluate
@@ -78,7 +78,7 @@ async def main():
     check(abs(v[1]-v[0]/0.30)<1e-9, 'base custo total: PV s/IVA = custo total / 30 %')
     await ev("saveSettings({fcBase:'materias',roundingEnabled:true})")
     # mobile menu
-    m=await b.new_page(viewport={'width':390,'height':844}); await m.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"')"); await m.goto(URL); await m.wait_for_timeout(1000)
+    m=await b.new_page(viewport={'width':390,'height':844}); await m.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"');localStorage.getItem('fp_lang')||localStorage.setItem('fp_lang','pt')"); await m.goto(URL); await m.wait_for_timeout(1000)
     await m.click('#menuBtn'); await m.wait_for_timeout(300)
     check(await m.evaluate("document.querySelector('#sidebar').classList.contains('open')"), 'menu lateral abre no telemóvel')
     await m.click('#nav a[href="#/fichas"]'); await m.wait_for_timeout(400)

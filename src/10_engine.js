@@ -6,12 +6,15 @@
 'use strict';
 
 const U = (() => {
-  const nfEur = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const nfEur4 = new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 4 });
-  const nfCache = {};
-  const nf = (d) => nfCache[d] || (nfCache[d] = new Intl.NumberFormat('pt-PT', { minimumFractionDigits: d, maximumFractionDigits: d }));
-  const nfMax = (d) => nfCache['m' + d] || (nfCache['m' + d] = new Intl.NumberFormat('pt-PT', { minimumFractionDigits: 0, maximumFractionDigits: d }));
-
+  let LOCALE = 'pt-PT', CUR = 'EUR', DEC = ',';
+  let nfCache = {};
+  const fmt = (key, opts) => nfCache[key] || (nfCache[key] = new Intl.NumberFormat(LOCALE, opts));
+  const nfEur = { format: (n) => fmt('e2', { style: 'currency', currency: CUR, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) };
+  const nfEur4 = { format: (n) => fmt('e4', { style: 'currency', currency: CUR, minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(n) };
+  const nf = (d) => fmt('n' + d, { minimumFractionDigits: d, maximumFractionDigits: d });
+  const nfMax = (d) => fmt('m' + d, { minimumFractionDigits: 0, maximumFractionDigits: d });
+  /** Formatação de números e moeda segundo o país do estabelecimento. */
+  function setLocale(locale, currency) { LOCALE = locale || 'pt-PT'; CUR = currency || 'EUR'; nfCache = {}; DEC = (1.5).toLocaleString(LOCALE).includes(',') ? ',' : '.'; }
   const ok = (n) => typeof n === 'number' && isFinite(n);
   const eur = (n) => ok(n) ? nfEur.format(n) : '—';
   const eur4 = (n) => ok(n) ? nfEur4.format(n) : '—';
@@ -25,14 +28,15 @@ const U = (() => {
     if (typeof v === 'number') return v;
     let s = String(v).trim();
     if (!s) return NaN;
-    s = s.replace(/[€%\s ]/g, '').replace(/eur$/i, '');
+    s = s.replace(/[€£%\s\u00a0\u202f]/g, '').replace(/(eur|gbp)$/i, '');
     if (!s) return NaN;
     const hasC = s.includes(','), hasD = s.includes('.');
     if (hasC && hasD) {
       if (s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.');
       else s = s.replace(/,/g, '');
     } else if (hasC) {
-      if ((s.match(/,/g) || []).length > 1) s = s.replace(/,/g, '');
+      // em países com ponto decimal (Reino Unido), "1,234" é separador de milhares
+      if ((s.match(/,/g) || []).length > 1 || (DEC === '.' && /^\d{1,3}(,\d{3})+$/.test(s))) s = s.replace(/,/g, '');
       else s = s.replace(',', '.');
     } else if (hasD && (s.match(/\./g) || []).length > 1) {
       s = s.replace(/\./g, '');
@@ -41,7 +45,7 @@ const U = (() => {
     return parseFloat(s);
   }
   /** Número para campo de formulário (vírgula decimal, sem separador de milhares). */
-  const inNum = (n, d = 4) => ok(n) ? numMax(n, d).replace(/\s| | /g, '').replace(/\.(?=\d{3})/g, '') : '';
+  const inNum = (n, d = 4) => (ok(n) ? fmt('i' + d, { minimumFractionDigits: 0, maximumFractionDigits: d, useGrouping: false }).format(n) : '');
 
   const round = (n, d = 2) => ok(n) ? Math.round((n + Number.EPSILON) * 10 ** d) / 10 ** d : n;
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -72,14 +76,14 @@ const U = (() => {
     }
   }
   const fmtDate = (iso) => { if (!iso) return '—'; const s = String(iso).slice(0, 10).split('-'); return s.length === 3 ? `${s[2]}/${s[1]}/${s[0]}` : iso; };
-  const fmtDateTime = (iso) => { if (!iso) return '—'; const d = new Date(iso); if (isNaN(d)) return iso; return d.toLocaleString('pt-PT', { dateStyle: 'short', timeStyle: 'short' }); };
+  const fmtDateTime = (iso) => { if (!iso) return '—'; const d = new Date(iso); if (isNaN(d)) return iso; return d.toLocaleString(LOCALE, { dateStyle: 'short', timeStyle: 'short' }); };
   const daysSince = (iso) => { if (!iso) return Infinity; const d = new Date(String(iso).slice(0, 10) + 'T00:00:00'); return Math.floor((Date.now() - d.getTime()) / 86400000); };
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const clone = (o) => (o === undefined ? undefined : JSON.parse(JSON.stringify(o)));
   const sum = (arr, f = (x) => x) => arr.reduce((a, x) => a + (Number(f(x)) || 0), 0);
   const avg = (arr) => (arr.length ? sum(arr) / arr.length : NaN);
 
-  return { ok, eur, eur4, num, numMax, pct, parseNum, inNum, round, uid, normalize, todayISO, nowISO, parseDate, fmtDate, fmtDateTime, daysSince, esc, clone, sum, avg };
+  return { setLocale, get locale() { return LOCALE; }, get currency() { return CUR; }, ok, eur, eur4, num, numMax, pct, parseNum, inNum, round, uid, normalize, todayISO, nowISO, parseDate, fmtDate, fmtDateTime, daysSince, esc, clone, sum, avg };
 })();
 
 /* ---------------------------- Unidades ---------------------------- */
@@ -97,14 +101,14 @@ const BASE_LABEL = { mass: 'kg', vol: 'L', count: 'un' };
 const PURCHASE_UNITS = [['kg', 'kg'], ['g', 'g'], ['l', 'litro'], ['ml', 'ml'], ['un', 'unidade'], ['emb', 'embalagem']];
 
 const UNIT_SYNONYMS = {
-  kg: ['kg', 'kgs', 'kilo', 'kilos', 'quilo', 'quilos', 'quilograma', 'quilogramas', 'kilograma'],
-  g: ['g', 'gr', 'grs', 'grama', 'gramas'],
-  l: ['l', 'lt', 'lts', 'litro', 'litros', 'ltr'],
-  ml: ['ml', 'mililitro', 'mililitros'],
+  kg: ['kg', 'kgs', 'kilo', 'kilos', 'quilo', 'quilos', 'quilograma', 'quilogramas', 'kilograma', 'kilogramo', 'kilogramos', 'kilogramme', 'kilogrammes', 'kilogram', 'kilograms'],
+  g: ['g', 'gr', 'grs', 'grama', 'gramas', 'gramo', 'gramos', 'gramme', 'grammes', 'gram', 'grams'],
+  l: ['l', 'lt', 'lts', 'litro', 'litros', 'ltr', 'litre', 'litres', 'liter', 'liters'],
+  ml: ['ml', 'mililitro', 'mililitros', 'millilitre', 'millilitres', 'milliliter', 'milliliters'],
   cl: ['cl', 'centilitro', 'centilitros'],
-  un: ['un', 'und', 'unid', 'unidade', 'unidades', 'uni', 'u', 'pc', 'pcs', 'peca', 'pecas', 'pç', 'ud'],
-  dz: ['dz', 'duzia', 'duzias'],
-  emb: ['emb', 'embalagem', 'embalagens', 'cx', 'caixa', 'caixas', 'pack', 'pacote', 'pacotes', 'saco', 'sacos', 'lata', 'latas', 'garrafa', 'garrafas', 'frasco', 'frascos', 'fardo'],
+  un: ['un', 'und', 'unid', 'unidade', 'unidades', 'uni', 'u', 'pc', 'pcs', 'peca', 'pecas', 'pç', 'ud', 'uds', 'unidad', 'unite', 'unites', 'unit', 'units', 'each', 'ea', 'piece', 'pieces', 'pieza', 'piezas'],
+  dz: ['dz', 'duzia', 'duzias', 'docena', 'docenas', 'douzaine', 'douzaines', 'dozen', 'doz'],
+  emb: ['emb', 'embalagem', 'embalagens', 'cx', 'caixa', 'caixas', 'pack', 'pacote', 'pacotes', 'saco', 'sacos', 'lata', 'latas', 'garrafa', 'garrafas', 'frasco', 'frascos', 'fardo', 'envase', 'caja', 'cajas', 'paquete', 'paquetes', 'bolsa', 'botella', 'botellas', 'bote', 'tarro', 'boite', 'boites', 'paquet', 'paquets', 'sachet', 'bouteille', 'bouteilles', 'pot', 'carton', 'cartons', 'box', 'boxes', 'packet', 'packets', 'bag', 'bags', 'bottle', 'bottles', 'tin', 'tins', 'can', 'cans', 'jar', 'jars', 'case', 'cases'],
 };
 function parseUnit(v) {
   const s = U.normalize(v).replace(/\s/g, '');
@@ -140,20 +144,20 @@ function convertUnits(qty, from, to, conv = {}) {
 
 /* ---------------------------- Alergénios (Reg. UE 1169/2011, Anexo II) ---------------------------- */
 const ALLERGENS = [
-  { id: 1, short: 'Glúten', name: 'Cereais que contêm glúten', color: '#c8902e', syn: ['gluten', 'trigo', 'cereais', 'cevada', 'centeio', 'aveia', 'espelta'] },
-  { id: 2, short: 'Crustáceos', name: 'Crustáceos', color: '#e0603a', syn: ['crustaceos', 'crustaceo', 'camarao', 'marisco crustaceo', 'lagosta', 'caranguejo'] },
-  { id: 3, short: 'Ovos', name: 'Ovos', color: '#e8b923', syn: ['ovos', 'ovo'] },
-  { id: 4, short: 'Peixes', name: 'Peixes', color: '#3a7bd5', syn: ['peixe', 'peixes'] },
-  { id: 5, short: 'Amendoins', name: 'Amendoins', color: '#a0522d', syn: ['amendoim', 'amendoins'] },
-  { id: 6, short: 'Soja', name: 'Soja', color: '#7a9a3a', syn: ['soja'] },
-  { id: 7, short: 'Leite', name: 'Leite', color: '#5b8fb9', syn: ['leite', 'lactose', 'laticinios', 'lacteos'] },
-  { id: 8, short: 'Frutos casca rija', name: 'Frutos de casca rija', color: '#8b5a2b', syn: ['frutos de casca rija', 'frutos casca rija', 'frutos secos', 'nozes', 'amendoas', 'avela', 'avelas', 'caju', 'pistacio'] },
-  { id: 9, short: 'Aipo', name: 'Aipo', color: '#4caf50', syn: ['aipo'] },
-  { id: 10, short: 'Mostarda', name: 'Mostarda', color: '#c9a400', syn: ['mostarda'] },
-  { id: 11, short: 'Sésamo', name: 'Sementes de sésamo', color: '#b39b74', syn: ['sesamo', 'sementes de sesamo', 'gergelim'] },
-  { id: 12, short: 'Sulfitos', name: 'Dióxido de enxofre e sulfitos', color: '#8e3b8e', syn: ['sulfitos', 'sulfito', 'dioxido de enxofre', 'so2'] },
-  { id: 13, short: 'Tremoço', name: 'Tremoço', color: '#d4a017', syn: ['tremoco', 'tremocos', 'lupino', 'lupina'] },
-  { id: 14, short: 'Moluscos', name: 'Moluscos', color: '#2a9d8f', syn: ['moluscos', 'molusco', 'ameijoa', 'mexilhao', 'polvo', 'lula', 'choco'] },
+  { id: 1, short: 'Glúten', name: 'Cereais que contêm glúten', color: '#c8902e', syn: ['gluten', 'trigo', 'cereais', 'cevada', 'centeio', 'aveia', 'espelta', 'cereales', 'cebada', 'centeno', 'avena', 'ble', 'cereales contenant du gluten', 'orge', 'seigle', 'wheat', 'cereals', 'barley', 'rye', 'oats'] },
+  { id: 2, short: 'Crustáceos', name: 'Crustáceos', color: '#e0603a', syn: ['crustaceos', 'crustaceo', 'camarao', 'marisco crustaceo', 'lagosta', 'caranguejo', 'crustaceans', 'crustaces', 'gamba', 'prawn', 'shrimp', 'crevette'] },
+  { id: 3, short: 'Ovos', name: 'Ovos', color: '#e8b923', syn: ['ovos', 'ovo', 'huevo', 'huevos', 'oeuf', 'oeufs', 'egg', 'eggs'] },
+  { id: 4, short: 'Peixes', name: 'Peixes', color: '#3a7bd5', syn: ['peixe', 'peixes', 'pescado', 'pescados', 'pez', 'poisson', 'poissons', 'fish'] },
+  { id: 5, short: 'Amendoins', name: 'Amendoins', color: '#a0522d', syn: ['amendoim', 'amendoins', 'cacahuete', 'cacahuetes', 'mani', 'arachide', 'arachides', 'cacahuete', 'peanut', 'peanuts'] },
+  { id: 6, short: 'Soja', name: 'Soja', color: '#7a9a3a', syn: ['soja', 'soy', 'soya', 'soybean', 'soybeans'] },
+  { id: 7, short: 'Leite', name: 'Leite', color: '#5b8fb9', syn: ['leite', 'lactose', 'laticinios', 'lacteos', 'leche', 'lactosa', 'lait', 'milk', 'dairy'] },
+  { id: 8, short: 'Frutos casca rija', name: 'Frutos de casca rija', color: '#8b5a2b', syn: ['frutos de casca rija', 'frutos casca rija', 'frutos secos', 'nozes', 'amendoas', 'avela', 'avelas', 'caju', 'pistacio', 'frutos de cascara', 'frutos de cascara de arbol', 'fruits a coque', 'noix', 'amandes', 'nuts', 'tree nuts', 'almonds', 'hazelnuts', 'walnuts'] },
+  { id: 9, short: 'Aipo', name: 'Aipo', color: '#4caf50', syn: ['aipo', 'apio', 'celeri', 'celery'] },
+  { id: 10, short: 'Mostarda', name: 'Mostarda', color: '#c9a400', syn: ['mostarda', 'mostaza', 'moutarde', 'mustard'] },
+  { id: 11, short: 'Sésamo', name: 'Sementes de sésamo', color: '#b39b74', syn: ['sesamo', 'sementes de sesamo', 'gergelim', 'granos de sesamo', 'graines de sesame', 'sesame', 'sesame seeds'] },
+  { id: 12, short: 'Sulfitos', name: 'Dióxido de enxofre e sulfitos', color: '#8e3b8e', syn: ['sulfitos', 'sulfito', 'dioxido de enxofre', 'so2', 'dioxido de azufre', 'anhydride sulfureux', 'sulfites', 'sulphites', 'sulphur dioxide'] },
+  { id: 13, short: 'Tremoço', name: 'Tremoço', color: '#d4a017', syn: ['tremoco', 'tremocos', 'lupino', 'lupina', 'altramuz', 'altramuces', 'lupin', 'lupine'] },
+  { id: 14, short: 'Moluscos', name: 'Moluscos', color: '#2a9d8f', syn: ['moluscos', 'molusco', 'ameijoa', 'mexilhao', 'polvo', 'lula', 'choco', 'mollusques', 'molluscs', 'mollusks'] },
 ];
 const ALLERGEN_BY_ID = Object.fromEntries(ALLERGENS.map((a) => [a.id, a]));
 /** Converte texto livre ("glúten, leite" ou "1;7") em lista de IDs de alergénios. */
@@ -332,7 +336,7 @@ const Calc = (() => {
         const st = l.staffId && l.staffId !== 'avg' ? data.staff.get(l.staffId) : null;
         const rate = st ? staffHourly(st) : avgRate;
         if (l.staffId && l.staffId !== 'avg' && !st) warnings.push('Funcionário removido na mão de obra');
-        return { staffId: l.staffId || 'avg', name: st ? st.name : 'Média da equipa', count: Math.max(0, Number(l.count) || 0), rate };
+        return { staffId: l.staffId || 'avg', name: st ? st.name : tr('Média da equipa'), count: Math.max(0, Number(l.count) || 0), rate };
       });
       const totCount = U.sum(labLines, (l) => l.count);
       const rateSum = U.sum(labLines, (l) => l.count * l.rate);

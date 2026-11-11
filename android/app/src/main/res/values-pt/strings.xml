@@ -1,0 +1,5 @@
+<resources>
+    <string name="save_cancelled">Gravação cancelada</string>
+    <string name="no_browser">Não foi possível abrir o link</string>
+    <string name="save_error">Erro ao gravar</string>
+</resources>

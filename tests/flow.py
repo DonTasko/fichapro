@@ -10,7 +10,7 @@ async def main():
   async with async_playwright() as p:
     b=await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
     ctx=await b.new_context(accept_downloads=True, viewport={'width':1400,'height':900})
-    pg=await ctx.new_page(); await pg.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"')"); errs=[]
+    pg=await ctx.new_page(); await pg.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"');localStorage.getItem('fp_lang')||localStorage.setItem('fp_lang','pt')"); errs=[]
     pg.on('pageerror', lambda e: errs.append(str(e)))
     await pg.goto(URL); await pg.wait_for_timeout(1200)
     await pg.evaluate("window.print=()=>{window.__printed=(window.__printed||0)+1}")

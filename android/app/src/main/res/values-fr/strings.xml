@@ -1,0 +1,5 @@
+<resources>
+    <string name="save_cancelled">Enregistrement annulé</string>
+    <string name="no_browser">Impossible d\'ouvrir le lien</string>
+    <string name="save_error">Impossible d\'enregistrer le fichier</string>
+</resources>

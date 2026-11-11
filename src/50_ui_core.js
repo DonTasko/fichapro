@@ -49,7 +49,7 @@ function confirmDlg(message, { title = 'Confirmar', ok = 'Confirmar', danger = f
 /* ---------- Componentes ---------- */
 function algBadge(id, trace = false, title) {
   const a = ALLERGEN_BY_ID[id]; if (!a) return '';
-  return `<span class="alg ${trace ? 'trace' : ''}" style="${trace ? 'color' : 'background'}:${a.color}" title="${h(title || (trace ? 'Pode conter: ' : '') + a.name)}">${a.id}</span>`;
+  return `<span class="alg ${trace ? 'trace' : ''}" style="${trace ? 'color' : 'background'}:${a.color}" title="${h(title || (trace ? tr('Pode conter') + ': ' : '') + tr(a.name))}">${a.id}</span>`;
 }
 function algList(ids = [], traces = []) {
   if (!ids.length && !traces.length) return '<span class="muted small">—</span>';
@@ -126,9 +126,10 @@ function lineChart(points, { height = 160 } = {}) {
 
 /* ---------- Impressão / PDF ---------- */
 function printHTML(html, title = 'Documento') {
+  html = I18N.trHTML(html); title = tr(title);
   if (Native.ok) {
     const css = [...document.querySelectorAll('style')].map((s) => s.textContent).join('\n');
-    const doc = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8"><title>${h(title)}</title><style>${css}\n#print-area{display:block!important}body{background:#fff}</style></head><body class="printing"><div id="print-area"><div class="print-doc">${html}</div></div></body></html>`;
+    const doc = `<!DOCTYPE html><html lang="${document.documentElement.lang}"><head><meta charset="UTF-8"><title>${h(title)}</title><style>${css}\n#print-area{display:block!important}body{background:#fff}</style></head><body class="printing"><div id="print-area"><div class="print-doc">${html}</div></div></body></html>`;
     Native.call('printHtml', title, doc).catch((e) => toast(e.message, 'err'));
     setTimeout(() => Native.maybeInterstitial(), 1500);
     return;
@@ -143,6 +144,8 @@ function printHTML(html, title = 'Documento') {
 }
 const fileStamp = () => U.todayISO();
 function exportRows(kind, name, sheets) {
+  const t = (c) => (typeof c === 'string' ? tr(c) : c && typeof c === 'object' && typeof c.v === 'string' ? { ...c, v: tr(c.v) } : c);
+  sheets = sheets.map((s) => ({ ...s, name: tr(s.name), rows: s.rows.map((r) => (r || []).map(t)) }));
   setTimeout(() => Native.maybeInterstitial(), 1500);
   if (kind === 'xlsx') IO.download(IO.writeXlsx(sheets), `${name}_${fileStamp()}.xlsx`);
   else IO.download(new Blob([IO.toCSV(sheets[0].rows)], { type: 'text/csv;charset=utf-8' }), `${name}_${fileStamp()}.csv`);
@@ -170,7 +173,7 @@ async function route(keepScroll = false) {
   const el = $('#view');
   el.innerHTML = '';
   try { await view(el, parts.slice(1)); }
-  catch (e) { console.error(e); el.innerHTML = `<div class="alert err">Ocorreu um erro ao abrir esta secção: ${h(e.message)}</div>`; }
+  catch (e) { console.error(e, e.stack); el.innerHTML = `<div class="alert err">Ocorreu um erro ao abrir esta secção: ${h(e.message)}</div>`; }
   window.scrollTo(0, keepScroll ? y : 0);
 }
 let lastHash = location.hash;

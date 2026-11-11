@@ -3,7 +3,12 @@
    ===================================================================== */
 const Gate = (() => {
   const el = () => $('#gate');
-  const show = (html) => { $('#app').style.display = 'none'; el().hidden = false; el().innerHTML = `<div class="gate-card"><div class="gate-brand"><span class="dot"></span>FichaPro<small>Fichas técnicas &amp; Food Cost</small></div>${html}</div>`; const f = $('input', el()); if (f) f.focus(); };
+  const show = (html) => {
+    $('#app').style.display = 'none'; el().hidden = false;
+    el().innerHTML = `<div class="gate-card"><div class="gate-brand"><span class="dot"></span>FichaPro<small>Fichas técnicas &amp; Food Cost</small><select id="gLang" data-notr class="gate-lang" aria-label="Language">${options(Object.entries(I18N.LANGS), I18N.lang)}</select></div>${html}</div>`;
+    $('#gLang', el()).onchange = (e) => { I18N.setLang(e.target.value); location.reload(); };
+    const f = $('input', el()); if (f) f.focus();
+  };
   const hide = () => { el().hidden = true; el().innerHTML = ''; $('#app').style.display = ''; };
   const busy = (btn, on, label) => { if (!btn) return; btn.disabled = on; if (on) { btn.dataset.l = btn.textContent; btn.textContent = label || 'Aguarde…'; } else if (btn.dataset.l) btn.textContent = btn.dataset.l; };
   const msg = (text, cls = 'err') => { const m = $('#gateMsg', el()); if (m) m.innerHTML = text ? `<div class="alert ${cls}">${text}</div>` : ''; };
@@ -79,11 +84,12 @@ const Gate = (() => {
     return new Promise((resolve) => {
       const list = Tenants.list;
       show(`<h2>${list.length ? 'Escolha o estabelecimento' : 'Crie o seu estabelecimento'}</h2>
-        <div class="small muted" style="margin-bottom:10px">Sessão: ${h(Auth.user.email)} · <a href="#" id="gOut">terminar sessão</a></div>
+        <div class="small muted" style="margin-bottom:10px">Sessão: <span data-notr>${h(Auth.user.email)}</span> · <a href="#" id="gOut">terminar sessão</a></div>
         ${list.length ? `<div class="grid" style="gap:8px;margin-bottom:16px">${list.map((t) => `<button class="btn gate-big" data-id="${t.id}"><b>${h(t.name)}</b><span>${h(Tenants.roleLabel(t.role))} · ${h(Tenants.status(t).label)}</span></button>`).join('')}</div><h3>Ou criar um novo</h3>` : '<p class="muted">Cada estabelecimento tem os seus próprios ingredientes, fichas e equipa.</p>'}
         <div id="gateMsg"></div>
         <form id="gForm" class="grid" style="gap:10px">
           <div class="field"><label>Nome do estabelecimento</label><input name="name" required maxlength="120" placeholder="ex.: Restaurante Don Tasko"></div>
+          <div class="field"><label>País</label><select name="country" data-notr>${options(Object.entries(COUNTRIES).map(([k, c]) => [k, c.name]), COUNTRY_BY_LANG[I18N.lang] || 'PT')}</select></div>
           ${localCount ? `<label class="check"><input type="checkbox" name="upload" checked> Enviar os ${localCount} registos que já existem neste dispositivo</label>` : ''}
           <label class="check"><input type="checkbox" name="demo" ${localCount ? '' : 'checked'}> Carregar dados de demonstração (pode apagá-los depois)</label>
           <button class="btn primary" type="submit" style="justify-content:center;padding:10px">Criar estabelecimento</button>
@@ -93,7 +99,7 @@ const Gate = (() => {
       $('#gForm', el()).onsubmit = async (e) => {
         e.preventDefault(); const f = readForm(e.target); const btn = $('button[type=submit]', el());
         busy(btn, true, 'A criar…');
-        try { const id = await Tenants.create(f.name.trim()); await Tenants.load(); resolve({ id, demo: f.demo, upload: f.upload, name: f.name.trim() }); }
+        try { const id = await Tenants.create(f.name.trim()); await Tenants.load(); resolve({ id, demo: f.demo, upload: f.upload, name: f.name.trim(), country: f.country }); }
         catch (err) { msg(h(err.message)); busy(btn, false); }
       };
     });
@@ -134,12 +140,14 @@ async function startCloud() {
     else { choice = await Gate.tenants(await localRecordCount()); id = choice.id; }
   }
   Tenants.select(id);
-  Gate.loading('A carregar os dados de ' + Tenants.current.name + '…');
+  Gate.loading(tr('A carregar os dados de') + ' ' + Tenants.current.name + '…');
   const adapter = new CloudAdapter(id);
   await Repo.init(adapter);
   if (!LS.get(adapter.cursorKey)) await adapter.pull();
   if (choice && choice.name) {
-    await saveSettings({ businessName: choice.name, firstRun: U.nowISO() });
+    const ds = defaultSettings(choice.country);
+    await saveSettings({ ...ds, businessName: choice.name, firstRun: U.nowISO() });
+    applyCountry();
     if (choice.upload) { const d = await localExport(); d.data.meta = (d.data.meta || []).map((m) => (m.id === 'settings' ? { ...m, businessName: choice.name } : m)); await Repo.importAll(d, 'merge'); toast('Dados deste dispositivo enviados para a conta', 'ok'); }
     if (choice.demo) await Demo.load();
   }

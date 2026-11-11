@@ -33,7 +33,7 @@ Views.fichas = (el) => {
       box.innerHTML = `<div class="card"><div class="table-wrap"><table><thead><tr><th>Código</th><th>Nome</th><th>Categoria</th><th class="r">Doses</th><th class="r">Matérias/dose</th><th class="r">Custo total/dose</th><th class="r">Custo kg/L</th><th class="r">PV c/IVA</th><th class="r">Food Cost</th><th>Alergénios</th><th></th></tr></thead><tbody>${list.map((x) => `<tr><td class="small">${h(x.r.code || '')}</td><td><a href="#/ficha/${x.r.id}"><b>${h(x.r.name)}</b></a>${demoTag(x.r)}${x.r.intermediate ? ' <span class="badge blue">Intermédia</span>' : ''}${x.c.errors.length ? ' <span class="badge red">Erro</span>' : ''}</td><td class="small">${h(x.r.category || '')}</td><td class="r">${U.numMax(x.r.portions)}</td><td class="r">${U.eur(x.c.perDose.materials)}</td><td class="r b">${U.eur(x.c.perDose.total)}</td><td class="r small">${U.ok(x.c.perBaseUnit) ? U.eur(x.c.perBaseUnit) + '/' + x.c.perBaseLabel : '—'}</td><td class="r">${x.p.current ? U.eur(x.p.current.gross) : '—'}</td><td class="r ${x.p.current ? pctClass(x.p.current.foodCostPct, x.p.target) : ''}">${x.p.current ? U.pct(x.p.current.foodCostPct) : '—'}</td><td>${algList(x.c.allergens.present, x.c.allergens.traces)}</td><td class="nowrap">${actions(x.r)}</td></tr>`).join('')}</tbody></table></div></div>`;
     } else {
       box.innerHTML = `<div class="list-cards">${list.map((x) => `<div class="rcard"><div class="img" style="${x.r.photo ? `background-image:url(${x.r.photo})` : ''}"><span class="tag">${x.r.intermediate ? '<span class="badge blue">Intermédia</span> ' : ''}${x.r.demo ? '<span class="badge demo">DEMO</span>' : ''}</span></div>
-        <div class="body"><a href="#/ficha/${x.r.id}" style="text-decoration:none"><b style="color:var(--navy)">${h(x.r.name)}</b></a><div class="small muted">${h(x.r.code || '')} · ${h(x.r.category || '')} · ${U.numMax(x.r.portions)} dose(s)</div>
+        <div class="body"><a href="#/ficha/${x.r.id}" style="text-decoration:none"><b style="color:var(--navy)">${h(x.r.name)}</b></a><div class="small muted" data-notr>${h(x.r.code || '')} · ${h(tr(x.r.category || ''))} · ${h(tr(U.numMax(x.r.portions) + ' dose(s)'))}</div>
         <div class="sumrow"><span>Custo total/dose</span><b>${U.eur(x.c.perDose.total)}</b></div>
         ${x.r.sellable !== false ? `<div class="sumrow"><span>PV c/IVA</span><span>${x.p.current ? U.eur(x.p.current.gross) : '<span class="muted">sem preço</span>'}</span></div><div class="sumrow"><span>Food Cost</span><span class="${x.p.current ? pctClass(x.p.current.foodCostPct, x.p.target) : ''}">${x.p.current ? U.pct(x.p.current.foodCostPct) : '—'}</span></div>` : `<div class="sumrow"><span>Custo por ${x.c.perBaseLabel || 'kg/L'}</span><span>${U.eur(x.c.perBaseUnit)}</span></div>`}
         <div style="margin-top:6px">${algList(x.c.allergens.present, x.c.allergens.traces)}</div>${x.c.errors.length ? `<div class="small red">${h(x.c.errors[0])}</div>` : ''}</div>
@@ -59,7 +59,7 @@ async function recipeAction(act, id, after) {
   }
   if (act === 'del') {
     const u = Calc.usages(dataView(), 'rec', id);
-    if (u.direct.length) { modal({ title: 'Não é possível eliminar', size: 'small', body: `<p><b>${h(r.name)}</b> é usada como preparação intermédia em: ${u.direct.map((x) => h(Repo.get('recipes', x).name)).join(', ')}.</p>` }); return; }
+    if (u.direct.length) { modal({ title: 'Não é possível eliminar', size: 'small', body: `<p><b>${h(r.name)}</b> é usada como preparação intermédia em: <span data-notr>${u.direct.map((x) => h(Repo.get('recipes', x).name)).join(', ')}</span>.</p>` }); return; }
     if (!(await confirmDlg(`Eliminar a ficha <b>${h(r.name)}</b> e todas as suas versões?`, { ok: 'Eliminar', danger: true }))) return;
     await Services.deleteRecipe(id); toast('Ficha eliminada'); after && after();
     if (UI.current === 'ficha') { UI.dirty = false; go('#/fichas'); } else Views.fichas($('#view'));
@@ -87,7 +87,7 @@ function edCompute() {
 function setDirty() { UI.dirty = JSON.stringify(Ed.rec) !== Ed.orig; const b = $('#edSave'); if (b) b.classList.toggle('green', UI.dirty); }
 function renderEditor(el) {
   const r = Ed.rec;
-  $('#pageTitle').textContent = r._new ? 'Nova ficha técnica' : 'Ficha técnica — ' + r.name;
+  $('#pageTitle').textContent = r._new ? tr('Nova ficha técnica') : tr('Ficha técnica') + ' — ' + r.name;
   const tabs = [['geral', 'Geral'], ['ingredientes', `Ingredientes (${r.lines.length})`], ['mao', 'Tempos e mão de obra'], ['energia', 'Energia e outros custos'], ['preco', 'Preço de venda'], ['alergenios', 'Alergénios'], ['versoes', 'Versões e histórico']];
   el.innerHTML = `${r.demo ? '<div class="alert info">Ficha de demonstração com preços fictícios.</div>' : ''}
     <div class="editor"><div><div class="card"><div class="tabs">${tabs.map(([k, l]) => `<button data-tab="${k}" class="${Ed.tab === k ? 'active' : ''}">${l}</button>`).join('')}</div><div id="edTab"></div></div></div>
@@ -107,7 +107,7 @@ function refreshSummary() {
   const r = Ed.rec;
   const sum = $('#edSum'); if (!sum) return { c, p };
   sum.innerHTML = `<h3>Estiva de custos</h3>
-    <div class="small muted">${U.numMax(r.portions)} dose(s)${c.finalBase ? ' · ' + U.numMax(r.finalQty) + ' ' + UNITS[r.finalUnit].label : ''}</div>
+    <div class="small muted" data-notr>${h(tr(U.numMax(r.portions) + ' dose(s)'))}${c.finalBase ? ' · ' + U.numMax(r.finalQty) + ' ' + UNITS[r.finalUnit].label : ''}</div>
     <table style="margin-top:6px"><thead><tr><th></th><th class="r">Lote</th><th class="r">Por dose</th></tr></thead><tbody>
     <tr><td>Matérias-primas</td><td class="r">${U.eur(c.materials)}</td><td class="r">${U.eur(c.perDose.materials)}</td></tr>
     <tr><td>Mão de obra</td><td class="r">${U.eur(c.labor)}</td><td class="r">${U.eur(c.perDose.labor)}</td></tr>
@@ -179,7 +179,7 @@ function renderTab() {
         <div><label class="small muted">Fotografia (opcional)</label>${r.photo ? `<img class="photo" src="${r.photo}" alt="">` : '<div class="photo muted" style="display:grid;place-items:center">Sem foto</div>'}
           <label class="btn sm filebtn" style="margin-top:6px">📷 ${r.photo ? 'Substituir' : 'Escolher'} fotografia<input type="file" id="edPhoto" accept="image/*"></label>${r.photo ? '<button class="btn sm danger" id="edPhotoDel" style="margin-top:6px">Remover foto</button>' : ''}
           <div class="help">Para ser usada noutras fichas por peso/volume, indique a quantidade final. Sem ela só pode ser usada por dose.</div></div></div>`;
-      bindInputs(box, (k) => { refreshSummary(); if (k === 'name') $('#pageTitle').textContent = 'Ficha técnica — ' + r.name; });
+      bindInputs(box, (k) => { refreshSummary(); if (k === 'name') $('#pageTitle').textContent = tr('Ficha técnica') + ' — ' + r.name; });
       $('#edPhoto', box).onchange = async (e) => { const f = e.target.files[0]; if (!f) return; try { r.photo = await resizeImage(f, 900); setDirty(); renderTab(); } catch { toast('Não foi possível ler a imagem', 'err'); } };
       const pd = $('#edPhotoDel', box); if (pd) pd.onclick = () => { r.photo = null; setDirty(); renderTab(); };
     },
@@ -247,7 +247,7 @@ function renderTab() {
         <div class="toolbar"><label class="check"><input type="radio" name="lmode" data-bind="labor.mode" value="simultaneo" ${ld.mode === 'simultaneo' ? 'checked' : ''}> Tempos simultâneos — todos trabalham durante o tempo indicado</label>
           <label class="check"><input type="radio" name="lmode" data-bind="labor.mode" value="individual" ${ld.mode === 'individual' ? 'checked' : ''}> Tempos individuais — os minutos já são a soma do trabalho de todos</label></div>
         <div class="table-wrap"><table><thead><tr><th>Funcionário / custo</th><th class="r">N.º de pessoas</th><th class="r">Custo horário</th><th></th></tr></thead><tbody>
-          ${(r.labor.lines || []).map((l, i) => `<tr data-ll="${i}"><td><select data-llf="staffId">${options([['avg', `Média da equipa (${U.eur(ld.avgRate)}/h)`], ...staff.map((s) => [s.id, `${s.name} (${U.eur(Calc.staffHourly(s))}/h)`])], l.staffId)}</select></td><td class="r"><input class="num" inputmode="decimal" data-llf="count" value="${h(vNum(l.count))}"></td><td class="r">${U.eur(ld.lines[i] ? ld.lines[i].rate : NaN)}/h</td><td><button class="btn sm danger" data-llrm>✕</button></td></tr>`).join('')}
+          ${(r.labor.lines || []).map((l, i) => `<tr data-ll="${i}"><td><select data-llf="staffId">${options([['avg', `${tr('Média da equipa')} (${U.eur(ld.avgRate)}/h)`], ...staff.map((s) => [s.id, `${s.name} (${U.eur(Calc.staffHourly(s))}/h)`])], l.staffId)}</select></td><td class="r"><input class="num" inputmode="decimal" data-llf="count" value="${h(vNum(l.count))}"></td><td class="r">${U.eur(ld.lines[i] ? ld.lines[i].rate : NaN)}/h</td><td><button class="btn sm danger" data-llrm>✕</button></td></tr>`).join('')}
         </tbody></table></div>
         <button class="btn sm" id="llAdd" style="margin-top:8px">+ Adicionar funcionário</button>
         <div class="alert ok" style="margin-top:12px" id="labRes"></div>
@@ -293,7 +293,7 @@ function renderTab() {
       box.innerHTML = `<div class="fields">
         <div class="field"><label>Food Cost pretendido</label><select id="pTgtSel">${options([['', `Padrão das configurações (${U.num(st.targetFC, 0)} %)`], ...preset.map((x) => [x, x + ' %']), ['custom', 'Personalizado']], tgt === null ? '' : preset.includes(tgt) ? tgt : 'custom')}</select></div>
         <div class="field" id="pTgtCustomBox" style="${tgt !== null && !preset.includes(tgt) ? '' : 'display:none'}"><label>Food Cost personalizado (%)</label><input class="num" id="pTgtCustom" inputmode="decimal" value="${h(U.inNum(tgt))}"></div>
-        <div class="field"><label>IVA de venda</label><select id="pVat">${options([['', `Da categoria "${r.category}" (${U.num(catVat, 0)} %)`], [0, '0 %'], [6, '6 %'], [13, '13 %'], [23, '23 %']], r.vatRate === null || r.vatRate === undefined || r.vatRate === '' ? '' : r.vatRate)}</select></div>
+        <div class="field"><label>IVA de venda</label><select id="pVat">${options([['', `${tr('Da categoria')} "${tr(r.category)}" (${U.num(catVat, catVat % 1 ? 1 : 0)} %)`], ...(VAT_RATES[st.country] || [0, 6, 13, 23]).map((r) => [r, U.num(r, r % 1 ? 1 : 0) + ' %'])], r.vatRate === null || r.vatRate === undefined || r.vatRate === '' ? '' : r.vatRate)}</select></div>
         <div class="field"><label>Preço de venda atual (com IVA)</label><input class="num" id="pSale" inputmode="decimal" value="${h(vNum(r.salePrice))}" placeholder="ex.: 14,90"></div>
       </div>
       <div class="small muted" style="margin:8px 0">Base do cálculo: ${st.fcBase === 'total' ? 'custo total de produção por dose' : 'custo das matérias-primas por dose'} (${U.eur(p.baseCost)}) ÷ Food Cost pretendido. ${st.roundingEnabled ? 'Arredondamento comercial ativo (' + h(st.roundingEndings) + ').' : 'Sem arredondamento.'} <a href="#/configuracoes">Alterar</a></div>
@@ -317,11 +317,11 @@ function renderTab() {
       const ov = r.allergenOverrides = r.allergenOverrides || { add: [], remove: [], traces: [], confirmed: false };
       box.innerHTML = `<div class="alert warn"><b>Apoio à identificação.</b> Os alergénios são detetados a partir dos ingredientes cadastrados. Confirme e corrija: a aplicação não garante a ausência de alergénios (rótulos de fornecedores, contaminações e alterações de receita podem não estar refletidos).</div>
         <div class="table-wrap"><table class="matrix"><thead><tr><th></th><th>Alergénio</th><th class="c">Contém</th><th class="c">Pode conter</th><th>Origem (ingredientes responsáveis)</th></tr></thead><tbody>
-        ${ALLERGENS.map((x) => { const auto = a.auto.includes(x.id); const pres = a.present.includes(x.id); const tr = a.traces.includes(x.id); return `<tr><td>${algBadge(x.id)}</td><td><b>${h(x.name)}</b></td>
-          <td class="c"><input type="checkbox" data-ap="${x.id}" ${pres ? 'checked' : ''}></td><td class="c"><input type="checkbox" data-at="${x.id}" ${tr || pres ? (tr ? 'checked' : '') : ''} ${pres ? 'disabled' : ''}></td>
-          <td class="small">${auto ? 'Automático: ' + h((a.sources[x.id] || []).join(', ')) : ''}${(ov.add || []).includes(x.id) ? '<span class="badge amber">Adicionado manualmente</span>' : ''}${(ov.remove || []).includes(x.id) && auto ? ' <span class="badge red">Removido manualmente — confirme!</span>' : ''}${a.traceSources[x.id] ? '<div class="muted">Pode conter via: ' + h(a.traceSources[x.id].join(', ')) + '</div>' : ''}</td></tr>`; }).join('')}
+        ${ALLERGENS.map((x) => { const auto = a.auto.includes(x.id); const pres = a.present.includes(x.id); const trc = a.traces.includes(x.id); return `<tr><td>${algBadge(x.id)}</td><td><b>${h(x.name)}</b></td>
+          <td class="c"><input type="checkbox" data-ap="${x.id}" ${pres ? 'checked' : ''}></td><td class="c"><input type="checkbox" data-at="${x.id}" ${trc || pres ? (trc ? 'checked' : '') : ''} ${pres ? 'disabled' : ''}></td>
+          <td class="small">${auto ? tr('Automático') + ': ' + h((a.sources[x.id] || []).join(', ')) : ''}${(ov.add || []).includes(x.id) ? '<span class="badge amber">Adicionado manualmente</span>' : ''}${(ov.remove || []).includes(x.id) && auto ? ' <span class="badge red">Removido manualmente — confirme!</span>' : ''}${a.traceSources[x.id] ? '<div class="muted">Pode conter via: <span data-notr>' + h(a.traceSources[x.id].join(', ')) + '</span></div>' : ''}</td></tr>`; }).join('')}
         </tbody></table></div>
-        <div class="toolbar" style="margin-top:12px"><label class="check"><input type="checkbox" id="algConf" ${ov.confirmed ? 'checked' : ''}> Confirmei os alergénios desta ficha${ov.confirmedAt ? ` (em ${U.fmtDate(ov.confirmedAt)})` : ''}</label><span class="grow"></span><button class="btn" id="algPrint">Imprimir ficha de alergénios para clientes</button></div>
+        <div class="toolbar" style="margin-top:12px"><label class="check"><input type="checkbox" id="algConf" ${ov.confirmed ? 'checked' : ''}> <span>Confirmei os alergénios desta ficha</span>${ov.confirmedAt ? ` <span data-notr>(${h(tr('em'))} ${U.fmtDate(ov.confirmedAt)})</span>` : ''}</label><span class="grow"></span><button class="btn" id="algPrint">Imprimir ficha de alergénios para clientes</button></div>
         <div class="field"><label>Notas sobre contaminação cruzada / manipulação</label><textarea id="algNotes" placeholder="ex.: Fritadeira partilhada com produtos panados (glúten)">${h(ov.notes || '')}</textarea></div>`;
       $$('[data-ap]', box).forEach((cb) => (cb.onchange = () => {
         const id = +cb.dataset.ap; const auto = c.allergens.auto.includes(id);
@@ -354,7 +354,7 @@ function setupAutocomplete(box, data) {
   const st = data.settings;
   const show = () => {
     const q = U.normalize(inp.value);
-    const ings = [...data.ingredients.values()].filter((i) => !q || U.normalize(i.name + ' ' + (i.code || '')).includes(q)).map((i) => ({ kind: 'ing', id: i.id, name: i.name, sub: `${i.category || ''} · ${U.eur4(Calc.ingredientUnitCost(i, st).cost)}/${IngUI.baseLabel(i)}`, demo: i.demo }));
+    const ings = [...data.ingredients.values()].filter((i) => !q || U.normalize(i.name + ' ' + (i.code || '')).includes(q)).map((i) => ({ kind: 'ing', id: i.id, name: i.name, sub: `${tr(i.category || '')} · ${U.eur4(Calc.ingredientUnitCost(i, st).cost)}/${IngUI.baseLabel(i)}`, demo: i.demo }));
     const recs = [...data.recipes.values()].filter((x) => x.intermediate && x.id !== Ed.rec.id && !Calc.wouldCycle(data, Ed.rec.id, x.id) && (!q || U.normalize(x.name).includes(q))).map((x) => ({ kind: 'rec', id: x.id, name: x.name, sub: 'Preparação intermédia', demo: x.demo }));
     items = [...recs, ...ings].sort((a, b) => { const as = U.normalize(a.name).startsWith(q) ? 0 : 1, bs = U.normalize(b.name).startsWith(q) ? 0 : 1; return as - bs || a.name.localeCompare(b.name, 'pt'); }).slice(0, 40);
     hl = 0;

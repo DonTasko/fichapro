@@ -1,0 +1,247 @@
+520	Mano obra/ración	MO/portion	Labour/portion
+521	Método	Méthode	Method
+522	N.º de personas	Nb de personnes	No. of people
+523	N.º de pagas/año	Nb de salaires/an	Salary payments/year
+524	Nada que importar	Rien à importer	Nothing to import
+525	Nata para cocinar ({#} ml)	Crème de cuisine ({#} ml)	Cooking cream ({#} ml)
+526	Nata {#}L	Crème {#}L	Cream {#}L
+527	Negocio y precios	Activité et prix	Business and prices
+528	No se han identificado alérgenos en los ingredientes.	Aucun allergène identifié dans les ingrédients.	No allergens identified in the ingredients.
+529	Ningún precio desactualizado.	Aucun prix obsolète.	No out-of-date prices.
+530	Ninguno.	Aucun.	None.
+531	Nombre	Nom	Name
+532	Nombre *	Nom *	Name *
+533	Nombre cambiado	Nom modifié	Name changed
+534	Nombre del establecimiento	Nom de l'établissement	Venue name
+535	Nombre del establecimiento (aparece en los informes)	Nom de l'établissement (apparaît dans les rapports)	Venue name (shown on reports)
+536	Nombre del ingrediente *	Nom de l'ingrédient *	Ingredient name *
+537	Nombre del plato o producto *	Nom du plat ou produit *	Dish or product name *
+538	Nota	Note	Note
+539	Nota del cambio (opcional)	Note de modification (facultatif)	Change note (optional)
+540	Nota: sin cantidad final, esta elaboración solo puede usarse por ración en otras fichas.	Remarque : sans quantité finale, cette préparation ne peut être utilisée que par portion dans d'autres fiches.	Note: without a final quantity, this sub-recipe can only be used by the portion in other recipe cards.
+541	Nueva categoría	Nouvelle catégorie	New category
+542	Nueva ficha técnica	Nouvelle fiche technique	New recipe card
+543	Nueva importación	Nouvelle importation	New import
+544	Nueva contraseña	Nouveau mot de passe	New password
+545	Nuevo Food Cost objetivo (%)	Nouveau Food Cost visé (%)	New target food cost (%)
+546	Nuevo coste	Nouveau coût	New cost
+547	Nuevo equipo	Nouvel équipement	New equipment
+548	Nuevo empleado	Nouvel employé	New staff member
+549	Nuevo ingrediente	Nouvel ingrédient	New ingredient
+550	No	Non	No
+551	No aplicar	Ne pas appliquer	Don't apply
+552	No confirmadas	Non confirmées	Not confirmed
+553	No se aplican costes indirectos. En esta ficha:	Aucun frais indirect appliqué. Dans cette fiche :	No overheads applied. On this recipe card:
+554	No se ha encontrado ninguna suscripción en esta cuenta de Google.	Aucun abonnement trouvé sur ce compte Google.	No subscription found on this Google account.
+555	No se ha podido leer la imagen	Impossible de lire l'image	Could not read the image
+556	No se han encontrado filas	Aucune ligne trouvée	No rows found
+557	No hay artículos de venta en la selección	Aucun article vendu dans la sélection	No sold items in the selection
+558	No se puede eliminar	Suppression impossible	Cannot delete
+559	Corazón {#} °C	À cœur {#} °C	Core {#} °C
+560	Número de raciones producidas *	Nombre de portions produites *	Number of portions produced *
+561	El archivo no tiene datos	Le fichier ne contient pas de données	The file has no data
+562	El archivo no es un Excel (.xlsx) válido. Los archivos .xls antiguos no son compatibles: guárdelo como .xlsx o CSV.	Le fichier n'est pas un Excel (.xlsx) valide. Les anciens fichiers .xls ne sont pas pris en charge : enregistrez-le en .xlsx ou CSV.	The file is not a valid Excel (.xlsx). Old .xls files are not supported: save it as .xlsx or CSV.
+563	Mi restaurante	Mon restaurant	My restaurant
+564	El plan gratuito permite hasta {#} fichas técnicas. Suscríbase a FichaPro Pro para tener registros ilimitados (Configuración → Plan).	Le forfait gratuit permet jusqu'à {#} fiches techniques. Passez à FichaPro Pro pour des fiches illimitées (Paramètres → Forfait).	The free plan allows up to {#} recipe cards. Subscribe to FichaPro Pro for unlimited records (Settings → Plan).
+565	El precio incluye IVA	Le prix est TTC	Price includes VAT
+566	Su perfil en este establecimiento es solo de consulta.	Votre profil dans cet établissement est en consultation seule.	Your role at this venue is view-only.
+567	OK	OK	OK
+568	Objetivo	Objectif	Target
+569	Objetivo {#}	Objectif {#}	Target {#}
+570	Observaciones	Remarques	Notes
+571	Ordenado por el Food Cost del precio aplicado	Trié par Food Cost du prix pratiqué	Sorted by food cost at the current price
+572	Ordenado por el beneficio estimado por ración	Trié par bénéfice estimé par portion	Sorted by estimated profit per portion
+573	Origen	Origine	Source
+574	Origen:	Origine :	Source:
+575	Los costes indirectos ya incluyen la energía de los equipos (no sumar equipos)	Les frais indirects incluent déjà l'énergie des équipements (ne pas ajouter les équipements)	Overheads already include equipment energy (don't add equipment)
+576	Los costes indirectos ya incluyen envases y consumibles (no sumar en las fichas)	Les frais indirects incluent déjà emballages et consommables (ne pas ajouter dans les fiches)	Overheads already include packaging and consumables (don't add on recipe cards)
+577	Los costes indirectos ya incluyen envases y consumibles: las líneas de esos tipos no se suman.	Les frais indirects incluent déjà emballages et consommables : les lignes de ces types ne sont pas ajoutées.	Overheads already include packaging and consumables: lines of those types are not added.
+578	Los costes indirectos solo se aplican a la ficha final. Cuando una elaboración intermedia se usa en otra ficha, entra solo con sus costes directos, para no contar los indirectos dos veces.	Les frais indirects ne s'appliquent qu'à la fiche finale. Lorsqu'une préparation intermédiaire est utilisée dans une autre fiche, elle n'entre qu'avec ses coûts directs, pour ne pas compter les frais indirects deux fois.	Overheads are only applied to the final recipe card. When a sub-recipe is used in another card, only its direct costs are carried over, so overheads aren't counted twice.
+579	Los datos actuales pueden enviarse a la cuenta al crear el establecimiento. No se borra nada de este dispositivo.	Les données actuelles peuvent être envoyées vers le compte lors de la création de l'établissement. Rien n'est effacé de cet appareil.	Current data can be sent to the account when you create the venue. Nothing is deleted from this device.
+580	Los datos solo están guardados en este dispositivo. Con una cuenta, quedan en la nube y puede usarlos en el ordenador, la tablet y el móvil, e invitar a su equipo.	Les données ne sont enregistrées que sur cet appareil. Avec un compte, elles sont dans le cloud et vous pouvez les utiliser sur ordinateur, tablette et téléphone, et inviter votre équipe.	Data is only saved on this device. With an account it lives in the cloud, so you can use it on computer, tablet and phone and invite your team.
+581	Los datos solo están guardados en este navegador. Aún no ha exportado ninguna copia de seguridad.	Les données ne sont enregistrées que dans ce navigateur. Vous n'avez encore exporté aucune sauvegarde.	Data is only saved in this browser. You haven't exported a backup yet.
+582	Los datos están en la nube. Una copia exportada sigue siendo útil como archivo independiente.	Les données sont dans le cloud. Une sauvegarde exportée reste utile comme archive indépendante.	Data is in the cloud. An exported backup is still useful as an independent archive.
+583	Los datos se guardan en este navegador (Local (IndexedDB)). Borrar los datos del navegador los elimina: exporte copias con regularidad.	Les données sont enregistrées dans ce navigateur (local (IndexedDB)). Effacer les données du navigateur les supprime : exportez des sauvegardes régulièrement.	Data is saved in this browser (local (IndexedDB)). Clearing browser data deletes it: export backups regularly.
+584	Otra	Autre	Other
+585	Otro	Autre	Other
+586	Otro artículo	Autre article	Other item
+587	Otros	Autres	Other
+588	Otros costes directos (envases, consumibles…)	Autres coûts directs (emballages, consommables…)	Other direct costs (packaging, consumables…)
+589	Otros costes indirectos	Autres frais indirects	Other overheads
+590	Otros costes operativos	Autres coûts d'exploitation	Other operating costs
+591	Otros operativos	Autres coûts d'exploitation	Other operating
+592	Otros operativos: {#} ({#})	Autres coûts d'exploitation : {#} ({#})	Other operating: {#} ({#})
+593	Otros/ración	Autres/portion	Other/portion
+594	Huevos	Œufs	Eggs
+595	Huevos clase M (docena)	Œufs calibre M (douzaine)	Medium eggs (dozen)
+596	Huevos docena	Œufs douzaine	Eggs dozen
+597	PV c/IVA	PV TTC	Price incl. VAT
+598	PV medio c/IVA	PV moyen TTC	Average price incl. VAT
+599	PV aplicado	PV pratiqué	Current price
+600	PV recomendado actual	PV recommandé actuel	Current recommended price
+601	PV s/IVA	PV HT	Price excl. VAT
+602	Por defecto de la configuración ({#})	Par défaut des paramètres ({#})	Settings default ({#})
+603	Pago y renovación gestionados por Google Play. Puede cancelar en cualquier momento en las suscripciones de Google Play.	Paiement et renouvellement gérés par Google Play. Vous pouvez résilier à tout moment dans les abonnements Google Play.	Payment and renewal handled by Google Play. You can cancel at any time in Google Play subscriptions.
+604	Contraseña	Mot de passe	Password
+605	Contraseña cambiada	Mot de passe modifié	Password changed
+606	Pimentón ahumado	Paprika fumé	Smoked paprika
+607	Para PDF, elija «Guardar como PDF» en la ventana de impresión del navegador.	Pour un PDF, choisissez « Enregistrer au format PDF » dans la fenêtre d'impression du navigateur.	For PDF, choose "Save as PDF" in the browser's print window.
+608	Para convertir peso ↔ volumen	Pour convertir poids ↔ volume	To convert weight ↔ volume
+609	Para convertir unidades ↔ peso	Pour convertir unités ↔ poids	To convert units ↔ weight
+610	Para usarla en otras fichas por peso/volumen, indique la cantidad final. Sin ella solo puede usarse por ración.	Pour l'utiliser dans d'autres fiches au poids/volume, indiquez la quantité finale. Sans elle, elle ne peut être utilisée que par portion.	To use it in other recipe cards by weight/volume, enter the final quantity. Without it, it can only be used by the portion.
+611	Para suscribirse al plan Pro, active primero la cuenta en la nube (tarjeta de arriba). La suscripción queda asociada al establecimiento y vale en todos los dispositivos.	Pour souscrire au forfait Pro, activez d'abord le compte cloud (carte ci-dessus). L'abonnement est lié à l'établissement et vaut sur tous les appareils.	To subscribe to Pro, first turn on the cloud account (card above). The subscription is linked to the venue and works on all devices.
+612	¿Pasar a usar la aplicación sin cuenta en este dispositivo? Verá los datos locales (no los de la nube). Los datos de la nube no se borran.	Utiliser l'application sans compte sur cet appareil ? Vous verrez les données locales (pas celles du cloud). Les données du cloud ne sont pas effacées.	Use the app without an account on this device? You'll see local data (not cloud data). Cloud data is not deleted.
+613	Pase el ratón sobre un símbolo para ver los ingredientes responsables.	Survolez un symbole pour voir les ingrédients concernés.	Hover over a symbol to see the ingredients responsible.
+614	Pastelería	Pâtisserie	Pastry
+615	Pastelero	Pâtissier	Pastry chef
+616	Pastelero (demo)	Pâtissier (démo)	Pastry chef (demo)
+617	Pastelería	Pâtisserie	Pastry
+618	País	Pays	Country
+619	País cambiado	Pays modifié	Country changed
+620	País del establecimiento	Pays de l'établissement	Venue country
+621	Pescadería Demo	Poissonnerie Démo	Demo Fishmonger
+622	Pescadería Norte	Poissonnerie Nord	North Fishmonger
+623	Pescado	Poissons	Fish
+624	Pescados y mariscos	Poissons et fruits de mer	Fish and seafood
+625	Por la potencia	Par la puissance	From power rating
+626	Porcentaje (%)	Pourcentage (%)	Percentage (%)
+627	Porcentaje sobre el coste directo	Pourcentage du coût direct	Percentage of direct cost
+628	Pérdida en limpieza/preparación	Perte au nettoyage/à la préparation	Loss in trimming/preparation
+629	Personalizado	Personnalisé	Custom
+630	Peso por unidad (g) — opcional	Poids par unité (g) — facultatif	Weight per unit (g) — optional
+631	Peso/cantidad final	Poids/quantité finale	Final weight/quantity
+632	Buscar fichas…	Rechercher des fiches…	Search recipe cards…
+633	Buscar por nombre, código o proveedor…	Rechercher par nom, code ou fournisseur…	Search by name, code or supplier…
+634	Buscar…	Rechercher…	Search…
+635	Picaña de añojo	Picanha de jeune bovin	Beef picanha (rump cap)
+636	Picaña a la parrilla	Picanha grillée	Grilled picanha
+637	Picaña a la parrilla: {#} →	Picanha grillée : {#} →	Grilled picanha: {#} →
+638	Pimienta negra molida	Poivre noir moulu	Ground black pepper
+639	Plan gratuito	Forfait gratuit	Free plan
+640	Plan gratuito disponible.	Forfait gratuit disponible.	Free plan available.
+641	Plan: Gratuito	Forfait : Gratuit	Plan: Free
+642	Platos principales	Plats principaux	Main courses
+643	Puede contener	Peut contenir	May contain
+644	Puede contener (contaminación cruzada)	Peut contenir (contamination croisée)	May contain (cross-contamination)
+648	Por ración	Par portion	Per portion
+649	Pendientes de envío	En attente d'envoi	Waiting to upload
+650	Por lote	Par lot	Per batch
+651	Postres	Desserts	Desserts
+652	Potencia (kW)	Puissance (kW)	Power (kW)
+653	Aplicado	Pratiqué	Current
+654	Plato	Plat	Dish
+655	Plato / producto	Plat / produit	Dish / product
+656	Platos y artículos producidos	Plats et articles produits	Dishes and items produced
+657	Platos principales	Plats principaux	Main courses
+658	Pérdidas	Perte	Loss
+659	Premium	Premium	Premium
+660	Preparación	Préparation	Preparation
+661	Elaboración base / intermedia	Préparation de base / intermédiaire	Base / sub-recipe
+662	Elaboración intermedia	Préparation intermédiaire	Sub-recipe
+663	Elaboración intermedia (puede usarse en otras fichas)	Préparation intermédiaire (utilisable dans d'autres fiches)	Sub-recipe (can be used in other recipe cards)
+664	Preparación:	Préparation :	Preparation:
+665	Elaboraciones intermedias	Préparations intermédiaires	Sub-recipes
+666	Precio	Prix	Price
+667	Precio actual c/IVA	Prix actuel TTC	Current price incl. VAT
+668	Precio actual: {#}	Prix actuel : {#}	Current price: {#}
+669	Precio actualizado	Prix mis à jour	Price updated
+670	Precio compra	Prix d'achat	Purchase price
+671	Precio de la energía	Prix de l'énergie	Energy prices
+672	Precio de la energía (€/kWh)	Prix de l'énergie (€/kWh)	Energy price (€/kWh)
+673	Precio de compra (total)	Prix d'achat (total)	Purchase price (total)
+674	Precio de compra (total) *	Prix d'achat (total) *	Purchase price (total) *
+675	Precio de venta	Prix de vente	Selling price
+676	Precio de venta (+/− € por ración)	Prix de vente (+/− € par portion)	Selling price (+/− € per portion)
+677	Precio de venta actual (con IVA)	Prix de vente actuel (TTC)	Current selling price (incl. VAT)
+678	Precio de venta:	Prix de vente :	Selling price:
+679	Precio desactualizado tras (días)	Prix obsolète après (jours)	Price out of date after (days)
+680	Precio incluye IVA (sí/no)	Prix TTC (oui/non)	Price includes VAT (yes/no)
+681	Precio no válido	Prix invalide	Invalid price
+682	Precio por L:	Prix par L :	Price per L:
+683	Precio por kg/L/ud.	Prix par kg/L/unité	Price per kg/L/unit
+684	Precio por kg:	Prix au kg :	Price per kg:
+685	Precio aplicado vs. sugerencias	Prix pratiqué vs suggestions	Current price vs suggestions
+686	Precio recomendado c/IVA	Prix recommandé TTC	Recommended price incl. VAT
+687	Precio sin IVA	Prix HT	Price excl. VAT
+688	Precio unit.	Prix unit.	Unit price
+689	Precios	Prix	Prices
+690	Precios desactualizados	Prix obsolètes	Out-of-date prices
+691	Primeras filas del archivo	Premières lignes du fichier	First rows of the file
+692	Producto	Produit	Product
+693	Producto sin precio	Produit sans prix	Product without price
+694	Producto ▲	Produit ▲	Product ▲
+695	Productos	Produits	Products
+696	Productos con pérdidas	Produits à perte	Loss-making products
+697	Productos con pérdidas estimadas	Produits à perte estimée	Products with estimated loss
+698	Productos de limpieza	Produits d'entretien	Cleaning products
+699	Productos de limpieza (demo)	Produits d'entretien (démo)	Cleaning products (demo)
+700	Productos y platos producidos	Produits et plats produits	Products and dishes produced
+701	Productos que requieren atención	Produits à surveiller	Products needing attention
+702	Propietario	Propriétaire	Owner
+703	Previsualizar →	Aperçu →	Preview →
+704	Cant.	Qté	Qty
+705	Cant.	Qté	Qty
+706	Cant. actual	Qté actuelle	Current qty
+707	Cant. bruta	Qté brute	Gross qty
+708	Cant. neta	Qté nette	Net qty
+709	Cantidad comprada	Quantité achetée	Quantity bought
+710	Cantidad comprada *	Quantité achetée *	Quantity bought *
+711	Cantidad final:	Quantité finale :	Final quantity:
+712	Cantidad neta = lo que realmente va al plato. Coste efectivo = coste ÷ ({#} − merma). Si la merma está vacía, se usa la del ingrediente; puede cambiarse solo en esta ficha. En las elaboraciones intermedias, el coste incluye también la mano de obra y la energía de esa elaboración.	Quantité nette = ce qui entre réellement dans le plat. Coût effectif = coût ÷ ({#} − perte). Une perte vide utilise la valeur de l'ingrédient ; elle peut être modifiée pour cette fiche seulement. Pour les préparations intermédiaires, le coût inclut aussi la main-d'œuvre et l'énergie de cette préparation.	Net quantity = what actually goes on the plate. Effective cost = cost ÷ ({#} − waste). Blank waste uses the ingredient's value; you can change it for this recipe card only. For sub-recipes, the cost also includes that sub-recipe's labour and energy.
+713	Granja	Ferme	Farm
+714	Ranking de platos con mayor Food Cost	Classement des plats au Food Cost le plus élevé	Dishes ranked by highest food cost
+715	Ranking de los platos más rentables	Classement des plats les plus rentables	Most profitable dishes ranking
+716	Reparto por ración (costes mensuales ÷ raciones/mes)	Répartition par portion (coûts mensuels ÷ portions/mois)	Per-portion allocation (monthly costs ÷ portions/month)
+717	Receta v{#} a precios actuales	Recette v{#} aux prix actuels	Recipe v{#} at current prices
+718	Recomendado	Recommandé	Recommended
+719	Sofreír cebolla y ajo en aceite con laurel, añadir las alubias con su caldo, llevar a ebullición e incorporar el arroz. Cocer {#}–{#} minutos.	Faire revenir oignon et ail à l'huile avec le laurier, ajouter les haricots avec leur jus, porter à ébullition et ajouter le riz. Cuire {#}–{#} minutes.	Sweat onion and garlic in olive oil with bay leaf, add the beans with their liquid, bring to the boil and add the rice. Cook for {#}–{#} minutes.
+720	Refrescos y zumos	Sodas et jus	Soft drinks and juices
+721	Registro de demostración (precio ficticio).	Enregistrement de démonstration (prix fictif).	Demo record (fictitious price).
+722	Registros sin identificador en	Enregistrements sans identifiant dans	Records without an ID in
+723	Informe global de rentabilidad	Rapport global de rentabilité	Overall profitability report
+724	Informes	Rapports	Reports
+725	Quítelo primero de esas fichas.	Retirez-le d'abord de ces fiches.	Remove it from those recipe cards first.
+726	Quitar	Retirer	Remove
+727	¿Quitar a este usuario del establecimiento?	Retirer cet utilisateur de l'établissement ?	Remove this user from the venue?
+728	Rend.	Rend.	Yield
+729	Rendimiento (%)	Rendement (%)	Yield (%)
+730	Rendimiento (final ÷ ingredientes netos)	Rendement (final ÷ ingrédients nets)	Yield (final ÷ net ingredients)
+731	Rendimiento aprovechable (%)	Rendement utilisable (%)	Usable yield (%)
+732	Rentabilidad	Rentabilité	Profitability
+733	Repetir	Répéter	Repeat
+734	Repetir contraseña	Confirmer le mot de passe	Repeat password
+735	Restablecer	Réinitialiser	Reset
+736	Restaurar compra	Restaurer l'achat	Restore purchase
+737	Resumen por categoría y productos con pérdidas	Synthèse par catégorie et produits à perte	Summary by category and loss-making products
+738	Salir sin guardar	Quitter sans enregistrer	Leave without saving
+739	Sal gruesa	Gros sel	Coarse salt
+740	Salmón fresco	Saumon frais	Fresh salmon
+741	Perejil fresco	Persil frais	Fresh parsley
+742	Salsas y bases	Sauces et fonds	Sauces and bases
+743	Saltear la cebolla y el ajo en la mantequilla, añadir los champiñones laminados, desglasar con vino blanco, reducir y ligar con la nata. Rectificar de sal.	Faire sauter l'oignon et l'ail au beurre, ajouter les champignons émincés, déglacer au vin blanc, réduire et lier à la crème. Rectifier l'assaisonnement.	Sauté the onion and garlic in butter, add the sliced mushrooms, deglaze with white wine, reduce and finish with the cream. Adjust the seasoning.
+744	Salario base mensual (€)	Salaire de base mensuel (€)	Monthly base salary (€)
+745	Salario {#} × {#} + {#} cargas ÷ {#} h	Salaire {#} × {#} + {#} charges ÷ {#} h	Salary {#} × {#} + {#} on-costs ÷ {#} h
+746	Si existe una cuenta con este email, recibirá un enlace para definir una nueva contraseña.	Si un compte existe avec cet e-mail, vous recevrez un lien pour définir un nouveau mot de passe.	If an account exists for this email, you'll receive a link to set a new password.
+747	Si es así, el coste usa el precio sin IVA	Si oui, le coût utilise le prix HT	If so, cost uses the price excl. VAT
+748	Si tiene alguna alergia o intolerancia alimentaria, informe a nuestro equipo antes de hacer el pedido. A pesar del cuidado en la preparación, no es posible garantizar la ausencia total de trazas de alérgenos.	Si vous avez une allergie ou une intolérance alimentaire, informez notre équipe avant de commander. Malgré nos précautions, nous ne pouvons garantir l'absence totale de traces d'allergènes.	If you have a food allergy or intolerance, please tell our team before ordering. Despite our care in preparation, we cannot guarantee the complete absence of traces of allergens.
+749	Sección no válida:	Section invalide :	Invalid section:
+750	Sellar el solomillo, pincelar con miel y mostaza y terminar en el horno. Servir con patatas rústicas y salsa de champiñones.	Saisir le filet mignon, badigeonner de miel et de moutarde et terminer au four. Servir avec pommes de terre rustiques et sauce aux champignons.	Sear the tenderloin, brush with honey and mustard and finish in the oven. Serve with rustic potatoes and mushroom sauce.
+751	Seleccione las celdas en la hoja de cálculo (incluida la cabecera), cópielas y péguelas aquí.	Sélectionnez les cellules dans le tableur (en-tête compris), copiez et collez ici.	Select the cells in the spreadsheet (including the header), copy and paste here.
+752	Sin apio	Sans céleri	Celery-free
+753	Sin cacahuetes	Sans arachides	Peanut-free
+754	Sin crustáceos	Sans crustacés	Crustacean-free
+755	Sin frutos de cáscara	Sans fruits à coque	Tree-nut-free
+756	Sin gluten	Sans gluten	Gluten-free
+757	Sin IVA	HT	Excl. VAT
+758	Sin leche	Sans lait	Milk-free
+759	Sin moluscos	Sans mollusques	Mollusc-free
+760	Sin mostaza	Sans moutarde	Mustard-free
+761	Sin huevos	Sans œufs	Egg-free
+762	Sin pescado	Sans poisson	Fish-free
+763	Sin soja	Sans soja	Soya-free
+764	Sin sulfitos	Sans sulfites	Sulphite-free
+765	Sin sésamo	Sans sésame	Sesame-free
+766	Sin altramuz	Sans lupin	Lupin-free
+767	No hay cambios de precio registrados.	Aucun changement de prix enregistré.	No price changes recorded.
+768	Sin cuenta. Los datos quedan solo en este navegador. Puede activar la cuenta más tarde.	Sans compte. Les données restent uniquement dans ce navigateur. Vous pourrez activer le compte plus tard.	No account. Data stays in this browser only. You can turn on an account later.
+769	Sin foto	Pas de photo	No photo

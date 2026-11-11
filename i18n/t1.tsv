@@ -1,0 +1,250 @@
+0	% del coste total	% du coût total	% of total cost
+1	(Google Play). Después de suscribirse allí, el plan Pro también queda activo aquí, en el navegador.	(Google Play). Après l'abonnement, le forfait Pro est aussi actif ici, dans le navigateur.	(Google Play). Once you subscribe there, the Pro plan is also active here, in the browser.
+2	(IVA deducible)	(TVA déductible)	(VAT reclaimable)
+3	(en los indirectos)	(dans les indirects)	(in overheads)
+4	(obj. {#})	(obj. {#})	(target {#})
+5	(precios ficticios). Puede eliminarlos en	(prix fictifs). Vous pouvez les supprimer dans	(fictitious prices). You can delete them in
+6	(salario + pagas extra + Seguridad Social + seguros), no el salario neto. En el modo «salario», el coste horario = salario × {#} ÷ {#} × ({#} + cargas) ÷ horas mensuales.	(salaire + primes + charges sociales + assurances), et non le salaire net. En mode « salaire », le coût horaire = salaire × {#} ÷ {#} × ({#} + charges) ÷ heures mensuelles.	(salary + bonuses + employer's NI + insurance), not take-home pay. In "salary" mode, hourly cost = salary × {#} ÷ {#} × ({#} + on-costs) ÷ monthly hours.
+7	+ Añadir coste	+ Ajouter un coût	+ Add cost
+8	+ Añadir equipo	+ Ajouter un équipement	+ Add equipment
+9	+ Añadir empleado	+ Ajouter un employé	+ Add staff member
+10	+ Añadir variación	+ Ajouter une variation	+ Add change
+11	+ Categoría	+ Catégorie	+ Category
+12	+ Nueva ficha	+ Nouvelle fiche	+ New recipe card
+13	+ Nueva ficha técnica	+ Nouvelle fiche technique	+ New recipe card
+14	+ Nuevo equipo	+ Nouvel équipement	+ New equipment
+15	+ Nuevo empleado	+ Nouvel employé	+ New staff member
+16	+ Nuevo ingrediente	+ Nouvel ingrédient	+ New ingredient
+17	+ elaboraciones intermedias: {#} · por ración:	+ préparations intermédiaires : {#} · par portion :	+ sub-recipes: {#} · per portion:
+18	. Basada en los ingredientes registrados; no garantiza la ausencia de alérgenos.	. Basée sur les ingrédients enregistrés ; ne garantit pas l'absence d'allergènes.	. Based on the recorded ingredients; it does not guarantee the absence of allergens.
+19	. Si los {#} minutos ya son la suma del tiempo de los dos ({#} min cada uno), use «tiempos individuales»: {#} × {#} h = {#}. Gestionar empleados en	. Si les {#} minutes sont déjà la somme du temps des deux ({#} min chacun), utilisez « temps individuels » : {#} × {#} h = {#}. Gérer les employés dans	. If the {#} minutes are already the combined time of both ({#} min each), use "individual times": {#} × {#} h = {#}. Manage staff in
+20	14 sustancias o productos que causan alergias o intolerancias	14 substances ou produits provoquant des allergies ou intolérances	14 substances or products causing allergies or intolerances
+21	= materias primas ÷ precio sin IVA.	= matières premières ÷ prix HT.	= ingredients ÷ price excl. VAT.
+22	= precio sin IVA − coste total imputado a la ficha (incluye mano de obra e indirectos). Ninguno de estos valores es el beneficio neto del negocio: faltan costes fijos no imputados (alquiler, gestión, marketing, amortizaciones) e impuestos sobre beneficios.	= prix HT − coût total imputé à la fiche (inclut main-d'œuvre et frais indirects). Aucune de ces valeurs n'est le bénéfice net de l'entreprise : il manque les coûts fixes non imputés (loyer, gestion, marketing, amortissements) et l'impôt sur les bénéfices.	= price excl. VAT − total cost allocated to the recipe (including labour and overheads). None of these figures is the business's net profit: unallocated fixed costs (rent, management, marketing, depreciation) and corporation tax are not included.
+23	= precio sin IVA − costes variables (materias, energía, envases/consumibles).	= prix HT − coûts variables (matières, énergie, emballages/consommables).	= price excl. VAT − variable costs (ingredients, energy, packaging/consumables).
+24	= precio sin IVA − materias primas.	= prix HT − matières premières.	= price excl. VAT − ingredients.
+25	? Las categorías de venta y los tipos impositivos pasan a ser los predeterminados de ese país (moneda: EUR). Las fichas mantienen la categoría correspondiente. Confirme los tipos con su asesor fiscal.	? Les catégories de vente et les taux de taxe deviennent ceux par défaut de ce pays (devise : EUR). Les fiches conservent la catégorie correspondante. Vérifiez les taux avec votre expert-comptable.	? Sales categories and tax rates will switch to that country's defaults (currency: EUR). Recipe cards keep the matching category. Check the rates with your accountant.
+26	? El historial de precios también se eliminará.	? L'historique des prix sera également supprimé.	? The price history will also be deleted.
+27	Cargando los datos de	Chargement des données de	Loading data for
+28	Cargando precios de Google Play…	Chargement des prix Google Play…	Loading Google Play prices…
+29	Cargando…	Chargement…	Loading…
+30	La compra se ha realizado pero aún no se ha podido activar:	L'achat a été effectué mais n'a pas encore pu être activé :	The purchase went through but could not be activated yet:
+31	Creando…	Création…	Creating…
+32	La identificación automática es una ayuda basada en los ingredientes registrados. Confirme siempre los alérgenos de cada ficha. La aplicación no puede garantizar la ausencia de alérgenos.	L'identification automatique est une aide basée sur les ingrédients enregistrés. Confirmez toujours les allergènes de chaque fiche. L'application ne peut pas garantir l'absence d'allergènes.	Automatic identification is an aid based on the recorded ingredients. Always confirm the allergens on each recipe card. The app cannot guarantee the absence of allergens.
+33	La nube ha rechazado el guardado:	Le cloud a refusé l'enregistrement :	The cloud rejected the save:
+34	A partir del salario	À partir du salaire	From salary
+35	La persona invitada crea una cuenta (o inicia sesión) con este email y obtiene acceso automáticamente. Editor: crea y modifica datos. Solo consulta: ve, sin modificar.	La personne invitée crée un compte (ou se connecte) avec cet e-mail et obtient l'accès automatiquement. Éditeur : crée et modifie des données. Consultation : voit, sans modifier.	The invited person creates an account (or signs in) with this email and gets access automatically. Editor: creates and edits data. View only: sees data without changing it.
+36	La primera fila es la cabecera	La première ligne est l'en-tête	First row is the header
+37	La sesión ha caducado. Inicie sesión de nuevo para seguir sincronizando.	La session a expiré. Reconnectez-vous pour continuer à synchroniser.	Your session has expired. Sign in again to keep syncing.
+38	La simulación no modifica los datos guardados. El «PV aplicado» incluye la variación de precio de venta indicada.	La simulation ne modifie pas les données enregistrées. Le « PV pratiqué » inclut la variation du prix de vente indiquée.	The simulation does not change saved data. "Current price" includes the selling price change entered.
+39	Sincronizando…	Synchronisation…	Syncing…
+40	La suscripción Pro se realiza en la app	L'abonnement Pro se fait dans l'application	The Pro subscription is purchased in the app
+41	Por debajo del objetivo	En dessous de l'objectif	Below target
+42	Abrir	Ouvrir	Open
+43	Guarnición	Accompagnement	Side
+44	Administrador	Administrateur	Administrator
+45	Espere…	Patientez…	Please wait…
+46	Apio	Céleri	Celery
+47	Ayudante	Commis	Kitchen assistant
+48	Ayudante de cocina (demo)	Commis de cuisine (démo)	Kitchen assistant (demo)
+49	Romero fresco	Romarin frais	Fresh rosemary
+50	Alérg.	Allerg.	Allerg.
+51	Alérgenos	Allergènes	Allergens
+52	Alérgenos por plato	Allergènes par plat	Allergens by dish
+53	Ajo	Ail	Garlic
+54	Cambiar	Modifier	Change
+55	Cambiar cantidades en	Modifier les quantités dans	Change quantities in
+56	Cambio	Modification	Change
+57	Cambios de precio de los ingredientes de esta ficha	Changements de prix des ingrédients de cette fiche	Price changes for this recipe's ingredients
+58	Cambie el precio de venta (con IVA) directamente en la tabla: todos los indicadores se recalculan y el precio queda guardado en la ficha.	Modifiez le prix de vente (TTC) directement dans le tableau : tous les indicateurs sont recalculés et le prix est enregistré dans la fiche.	Edit the selling price (incl. VAT) directly in the table: all figures are recalculated and the price is saved to the recipe card.
+59	Cacahuetes	Arachides	Peanuts
+60	Antes y después	Avant et après	Before and after
+61	Anual	Annuel	Yearly
+62	Borrar	Effacer	Delete
+63	¿Borrar <b>todos</b> los datos (ingredientes, fichas, historial, configuración)? Esta acción no se puede deshacer. Exporte antes una copia de seguridad.	Effacer <b>toutes</b> les données (ingrédients, fiches, historique, paramètres) ? Cette action est irréversible. Exportez d'abord une sauvegarde.	Delete <b>all</b> data (ingredients, recipe cards, history, settings)? This cannot be undone. Export a backup first.
+64	Borrar todos los datos	Effacer toutes les données	Delete all data
+65	Borrar todo	Tout effacer	Delete everything
+66	Se aplica un porcentaje de	Un pourcentage de	A percentage of
+67	Aplicar precio recomendado	Appliquer le prix recommandé	Apply recommended price
+68	Aplicación	Application	Applies to
+69	Aprovechamiento y conversiones	Rendement et conversions	Yield and conversions
+70	Almacenamiento: Local (IndexedDB)	Stockage : local (IndexedDB)	Storage: local (IndexedDB)
+71	Redondeo comercial	Arrondi commercial	Price rounding
+72	Arroz redondo	Riz rond	Short-grain rice
+73	Arroz con alubias	Riz aux haricots rouges	Portuguese bean rice
+74	Artículo de venta (tiene precio al cliente)	Article vendu (a un prix client)	Sold item (has a customer price)
+75	Artículos de venta	Articles vendus	Sold items
+76	La configuración indica que el porcentaje de costes indirectos ya incluye la energía: el coste de los equipos no se suma, para evitar duplicidades.	Les paramètres indiquent que le pourcentage de frais indirects inclut déjà l'énergie : le coût des équipements n'est pas ajouté, pour éviter un double comptage.	Settings say the overhead percentage already includes energy: equipment cost is not added, to avoid double counting.
+77	Las columnas se han asociado automáticamente por nombre. Confírmelas o cámbielas. Si solo tiene el precio por kg/L/ud., asócielo a «Precio por kg/L/ud.».	Les colonnes ont été associées automatiquement par leur nom. Confirmez ou modifiez. Si vous n'avez que le prix au kg/L/unité, associez-le à « Prix par kg/L/unité ».	Columns were matched automatically by name. Confirm or change them. If you only have the price per kg/L/unit, match it to "Price per kg/L/unit".
+78	Las contraseñas no coinciden.	Les mots de passe ne correspondent pas.	Passwords do not match.
+79	Asar el bacalao con cebolla y ajo en aceite de oliva. Servir con patatas al puño y espinacas salteadas.	Rôtir la morue avec oignon et ail à l'huile d'olive. Servir avec pommes de terre écrasées et purée de verdure.	Roast the cod with onion and garlic in olive oil. Serve with crushed potatoes and sautéed greens.
+80	Asocie la columna del precio	Associez la colonne du prix	Match the price column
+81	Asocie al menos la columna del nombre	Associez au moins la colonne du nom	Match at least the name column
+82	Atención: hay costes mensuales de electricidad/gas incluidos en el reparto y fichas que también suman el consumo de equipos con esa energía. Si la factura mensual incluye ese consumo, lo está contando dos veces. Incluya en el reparto solo la parte no asociada a los equipos (frío, iluminación, climatización) o marque la opción de arriba.	Attention : des coûts mensuels d'électricité/gaz sont inclus dans la répartition et des fiches ajoutent aussi la consommation d'équipements utilisant cette énergie. Si la facture mensuelle inclut cette consommation, elle est comptée deux fois. Incluez dans la répartition uniquement la part non liée aux équipements (froid, éclairage, climatisation) ou cochez l'option ci-dessus.	Warning: monthly electricity/gas costs are included in the allocation and some recipe cards also add the consumption of equipment using that energy. If the monthly bill includes that consumption, you are counting it twice. Only include the part not linked to equipment (refrigeration, lighting, air conditioning) or tick the option above.
+83	Activar cuenta en la nube	Activer le compte cloud	Turn on cloud account
+84	Activo	Actif	Active
+85	Actual	Actuel	Current
+86	Actualizado	Mis à jour	Updated
+87	Actualizar	Mettre à jour	Update
+88	Actualizar existentes	Mettre à jour les existants	Update existing
+89	Aceite de oliva virgen extra	Huile d'olive vierge extra	Extra virgin olive oil
+90	Acción	Action	Action
+91	Acción para todos los duplicados…	Action pour tous les doublons…	Action for all duplicates…
+92	Azúcar blanco	Sucre blanc	White sugar
+93	Bacalao asado	Morue rôtie	Roast salt cod
+94	Bacalao grande desalado	Morue épaisse dessalée	Large desalted salt cod
+95	Base de cálculo del precio sugerido	Base de calcul du prix suggéré	Basis for the suggested price
+96	Base de datos bloqueada por otra pestaña	Base de données bloquée par un autre onglet	Database locked by another tab
+97	Base del cálculo: coste de las materias primas por ración ({#}) ÷ Food Cost objetivo. Redondeo comercial activo ({#}; {#}).	Base de calcul : coût des matières premières par portion ({#}) ÷ Food Cost visé. Arrondi commercial actif ({#} ; {#}).	Calculation basis: ingredient cost per portion ({#}) ÷ target food cost. Price rounding on ({#}; {#}).
+98	Patata	Pomme de terre	Potato
+99	Patatas rústicas	Pommes de terre rustiques	Rustic potatoes
+100	Bebida	Boisson	Drink
+101	Bebidas	Boissons	Drinks
+102	Bebidas alcohólicas	Boissons alcoolisées	Alcoholic drinks
+103	Bebidas alcohólicas para llevar	Boissons alcoolisées à emporter	Takeaway alcoholic drinks
+104	Bienvenido	Bienvenue	Welcome
+105	Escaldar los grelos, picarlos finamente, rehogar en aceite y ajo y ligar con harina.	Blanchir les feuilles de navet, hacher finement, faire revenir à l'huile et à l'ail et lier à la farine.	Blanch the turnip greens, chop finely, sauté in olive oil and garlic and thicken with flour.
+106	Cada establecimiento tiene sus propios ingredientes, fichas y equipo.	Chaque établissement a ses propres ingrédients, fiches et équipe.	Each venue has its own ingredients, recipe cards and team.
+107	Cafetería	Cafétéria	Coffee bar
+108	Calculadora rápida	Calculatrice rapide	Quick calculator
+109	Calcular automáticamente (media de los empleados activos):	Calculer automatiquement (moyenne des employés actifs) :	Calculate automatically (average of active staff):
+110	Cancelar	Annuler	Cancel
+111	Carnes	Viandes	Meat
+112	Cargar datos de demostración (puede borrarlos después)	Charger les données de démonstration (vous pourrez les supprimer)	Load demo data (you can delete it later)
+113	Cargar demostración	Charger la démo	Load demo
+114	Tarjetas	Cartes	Cards
+115	Categoría	Catégorie	Category
+116	Categoría (define el IVA de venta)	Catégorie (définit la TVA de vente)	Category (sets the sales VAT)
+117	Categorías de ingredientes (una por línea)	Catégories d'ingrédients (une par ligne)	Ingredient categories (one per line)
+118	Categorías de venta y tipos de IVA	Catégories de vente et taux de TVA	Sales categories and VAT rates
+119	Categorías guardadas	Catégories enregistrées	Categories saved
+120	Cebolla	Oignon	Onion
+121	Escenario	Scénario	Scenario
+122	Cereales que contienen gluten	Céréales contenant du gluten	Cereals containing gluten
+123	Chocolate de cobertura {#}	Chocolat pâtissier {#}	Cooking chocolate {#}
+124	Champiñones frescos	Champignons frais	Fresh mushrooms
+125	Pegue primero los datos	Collez d'abord les données	Paste the data first
+126	Con «coste total», la mano de obra y los indirectos entran en el numerador y el porcentaje deja de ser un Food Cost en sentido estricto (se acerca al «prime cost»). Los precios sugeridos suben bastante.	Avec « coût total », la main-d'œuvre et les frais indirects entrent au numérateur et le pourcentage n'est plus un Food Cost au sens strict (il se rapproche du « prime cost »). Les prix suggérés augmentent nettement.	With "total cost", labour and overheads go into the numerator and the percentage is no longer a food cost in the strict sense (it is closer to prime cost). Suggested prices rise considerably.
+127	Con IVA	TTC	Incl. VAT
+128	Con errores	Avec erreurs	With errors
+129	Con pérdidas	À perte	Loss-making
+130	¿Cómo quiere usar la aplicación?	Comment voulez-vous utiliser l'application ?	How do you want to use the app?
+131	Comparar con la actual	Comparer avec l'actuelle	Compare with current
+132	Comparar v{#} con la versión actual (v{#})	Comparer v{#} avec la version actuelle (v{#})	Compare v{#} with the current version (v{#})
+133	Comparación de costes antes y después de actualizaciones	Comparaison des coûts avant et après mises à jour	Cost comparison before and after updates
+134	Comparación de precios de venta	Comparaison des prix de vente	Selling price comparison
+135	Componente	Composante	Component
+136	Composición media del coste	Composition moyenne du coût	Average cost breakdown
+137	Compra	Achat	Purchase
+138	Compra y precio	Achat et prix	Purchase and price
+139	Compresión no compatible	Compression non prise en charge	Compression not supported
+140	Cocción	Cuisson	Cooking
+141	Cocción:	Cuisson :	Cooking:
+142	Configuración	Paramètres	Settings
+143	Confirmado	Confirmé	Confirmed
+144	Confirmar	Confirmer	Confirm
+145	Congelados	Surgelés	Frozen
+146	Conservar a {#}–{#} °C	Conserver à {#}–{#} °C	Store at {#}–{#} °C
+147	Consumibles	Consommables	Consumables
+148	Consumible	Consommable	Consumable
+149	Cuenta y sincronización	Compte et synchronisation	Account and sync
+150	Contar el tiempo de cocción como trabajo (desmárquelo si la cocción no requiere atención, p. ej.: horno o cocción lenta)	Compter le temps de cuisson comme travail (décochez si la cuisson se fait sans surveillance, ex. : four ou cuisson lente)	Count cooking time as labour (untick if cooking runs unattended, e.g. oven or slow cooking)
+151	Contenido del envase	Contenu de l'emballage	Pack contents
+152	Contenido de cada envase *	Contenu de chaque emballage *	Contents of each pack *
+153	Continuar	Continuer	Continue
+154	Contribución media	Contribution moyenne	Average contribution
+155	Contiene	Contient	Contains
+156	Invitar	Inviter	Invite
+157	Invitar a otras personas es una función del plan Pro.	Inviter d'autres personnes est une fonctionnalité du forfait Pro.	Inviting other people is a Pro plan feature.
+158	Invitación registrada. Avise a la persona para que cree una cuenta con este email.	Invitation enregistrée. Prévenez la personne de créer un compte avec cet e-mail.	Invitation saved. Ask the person to create an account with this email.
+159	Copiar y pegar	Copier-coller	Copy and paste
+160	Corrija los campos marcados	Corrigez les champs signalés	Fix the highlighted fields
+161	Corrija los valores directamente en la tabla. Las filas con errores no se importan hasta corregirlas. Los duplicados (mismo código o nombre) se marcan: elija actualizar el existente, crear uno nuevo o ignorar. Actualizar el precio registra el historial y recalcula las fichas.	Corrigez les valeurs directement dans le tableau. Les lignes en erreur ne sont pas importées tant qu'elles ne sont pas corrigées. Les doublons (même code ou nom) sont signalés : choisissez de mettre à jour l'existant, créer un nouveau ou ignorer. Mettre à jour le prix enregistre l'historique et recalcule les fiches.	Fix values directly in the table. Rows with errors are not imported until fixed. Duplicates (same code or name) are flagged: choose to update the existing one, create a new one or skip. Updating the price records history and recalculates recipe cards.
+162	Cortar la patata en gajos con piel, sazonar y asar a {#} °C.	Couper les pommes de terre en quartiers avec la peau, assaisonner et rôtir à {#} °C.	Cut the potatoes into skin-on wedges, season and roast at {#} °C.
+163	Cocinero	Cuisinier	Cook
+164	Cocinero de primera (demo)	Chef de partie (démo)	Chef de partie (demo)
+165	Cocinero de primera (demo)	Chef de partie (démo)	Chef de partie (demo)
+166	Crear	Créer	Create
+167	Crear como nuevos	Créer comme nouveaux	Create as new
+168	Crear cuenta	Créer un compte	Create account
+169	Crear establecimiento	Créer l'établissement	Create venue
+170	Crear ingrediente	Créer un ingrédient	Create ingredient
+171	Cree su establecimiento	Créez votre établissement	Create your venue
+172	Crustáceos	Crustacés	Crustaceans
+173	Coste	Coût	Cost
+174	Coste anterior	Coût précédent	Previous cost
+175	Coste de mano de obra (variación %)	Coût de main-d'œuvre (variation %)	Labour cost (change %)
+176	Coste de materias primas ÷ Food Cost (definición clásica)	Coût des matières premières ÷ Food Cost (définition classique)	Ingredient cost ÷ food cost % (classic definition)
+177	Coste efectivo	Coût effectif	Effective cost
+178	Coste estimado:	Coût estimé :	Estimated cost:
+179	Coste horario	Coût horaire	Hourly cost
+180	Coste horario (€)	Coût horaire (€)	Hourly cost (€)
+181	Coste horario manual	Coût horaire manuel	Manual hourly cost
+182	Coste horario medio del equipo	Coût horaire moyen de l'équipe	Average team hourly cost
+183	Coste horario para la empresa (€) *	Coût horaire pour l'entreprise (€) *	Hourly cost to the business (€) *
+184	Coste horario:	Coût horaire :	Hourly cost:
+185	Coste kg/L	Coût kg/L	Cost kg/L
+186	Coste lote	Coût du lot	Batch cost
+187	Coste medio de producción	Coût moyen de production	Average production cost
+188	Coste medio/ración	Coût moyen/portion	Average cost/portion
+189	Coste nuevo	Nouveau coût	New cost
+190	Coste por L	Coût par L	Cost per L
+191	Coste por base	Coût par unité de base	Cost per base unit
+192	Coste por hora (€)	Coût par heure (€)	Cost per hour (€)
+193	Coste por kg	Coût par kg	Cost per kg
+194	Coste por kg de producto final:	Coût par kg de produit fini :	Cost per kg of finished product:
+195	Coste total	Coût total	Total cost
+196	Coste total de producción	Coût total de production	Total production cost
+197	Coste total de producción ÷ porcentaje objetivo	Coût total de production ÷ pourcentage visé	Total production cost ÷ target percentage
+198	Coste total/ración	Coût total/portion	Total cost/portion
+199	Coste/base	Coût/base	Cost/base
+200	Coste/ración	Coût/portion	Cost/portion
+201	Coste/ración antes	Coût/portion avant	Cost/portion before
+202	Coste/ración actual	Coût/portion actuel	Current cost/portion
+203	Coste/ración después	Coût/portion après	Cost/portion after
+204	Coste/ración el {#}/{#}/{#}	Coût/portion le {#}/{#}/{#}	Cost/portion on {#}/{#}/{#}
+205	Coste/ración en ese momento	Coût/portion à ce moment	Cost/portion at the time
+206	Coste/hora	Coût/heure	Cost/hour
+207	Coste/hora de un equipo = potencia (kW) × precio del kWh × factor de uso. El factor refleja que el equipo no consume la potencia máxima todo el tiempo (termostato). También puede indicar directamente el coste por hora.	Coût/heure d'un équipement = puissance (kW) × prix du kWh × facteur d'utilisation. Le facteur reflète le fait que l'équipement ne consomme pas sa puissance maximale en permanence (thermostat). Vous pouvez aussi indiquer directement le coût horaire.	Cost/hour of equipment = power (kW) × price per kWh × usage factor. The factor reflects that equipment does not draw full power all the time (thermostat). You can also enter the cost per hour directly.
+208	Coste/hora manual	Coût/heure manuel	Manual cost/hour
+209	Costes de mano de obra	Coûts de main-d'œuvre	Labour costs
+210	Costes energéticos y operativos	Coûts énergétiques et d'exploitation	Energy and operating costs
+211	Costes indirectos (generales)	Frais indirects (généraux)	Overheads (general)
+212	Costes indirectos en las fichas	Frais indirects dans les fiches	Overheads in recipe cards
+213	Costes mensuales incluidos:	Coûts mensuels inclus :	Monthly costs included:
+214	Costes operativos mensuales	Coûts d'exploitation mensuels	Monthly operating costs
+215	Cálculo	Calcul	Calculation
+216	Cálculo del coste	Calcul du coût	Cost calculation
+217	Círculo lleno = contiene · círculo discontinuo = puede contener (contaminación cruzada)	Cercle plein = contient · cercle pointillé = peut contenir (contamination croisée)	Solid circle = contains · dashed circle = may contain (cross-contamination)
+218	Círculo lleno: contiene · Círculo discontinuo: puede contener trazas (contaminación cruzada).	Cercle plein : contient · Cercle pointillé : peut contenir des traces (contamination croisée).	Solid circle: contains · Dashed circle: may contain traces (cross-contamination).
+219	Código	Code	Code
+220	Código interno	Code interne	Internal code
+221	Copia creada por una versión más reciente de la aplicación	Sauvegarde créée par une version plus récente de l'application	Backup created by a newer version of the app
+222	Copia de seguridad exportada	Sauvegarde exportée	Backup exported
+223	Copia importada	Sauvegarde importée	Backup imported
+224	Copias de seguridad	Sauvegardes	Backups
+225	DEMO	DÉMO	DEMO
+226	DEMOSTRACIÓN	DÉMONSTRATION	DEMO
+227	De la categoría	De la catégorie	From category
+228	Datos de demostración	Données de démonstration	Demo data
+229	Datos de demostración cargados	Données de démonstration chargées	Demo data loaded
+230	Datos de este dispositivo enviados a la cuenta	Données de cet appareil envoyées vers le compte	This device's data was sent to the account
+231	Datos guardados solo en este navegador.	Données enregistrées uniquement dans ce navigateur.	Data saved only in this browser.
+232	Datos en la nube, sincronizados entre ordenador, tablet y móvil. Puede invitar a su equipo.	Données dans le cloud, synchronisées entre ordinateur, tablette et téléphone. Vous pouvez inviter votre équipe.	Data in the cloud, synced across computer, tablet and phone. You can invite your team.
+233	Datos en la nube, sincronizados.	Données dans le cloud, synchronisées.	Data in the cloud, synced.
+234	Panel	Tableau de bord	Dashboard
+235	Fecha	Date	Date
+236	Fecha de la última actualización	Date de la dernière mise à jour	Last updated
+237	Fecha de actualización	Date de mise à jour	Update date
+238	Desglose del coste de todas las fichas	Décomposition du coût de toutes les fiches	Cost breakdown of all recipe cards
+239	Define la moneda, el formato de los números, los tipos impositivos predeterminados y la ley de alérgenos citada.	Définit la devise, le format des nombres, les taux de taxe par défaut et la loi sur les allergènes citée.	Sets the currency, number format, default tax rates and the allergen law quoted.
+240	Definido en la pestaña «Tiempos»	Défini dans l'onglet « Temps »	Set in the "Times" tab
+241	Demostración	Démonstration	Demo
+242	Densidad (kg/L) — opcional	Densité (kg/L) — facultatif	Density (kg/L) — optional
+243	Dentro del objetivo	Dans l'objectif	On target
+244	Derretir el chocolate con la mantequilla al baño maría, añadir yemas y azúcar, incorporar las claras a punto de nieve y la nata montada. Refrigerar {#} h.	Faire fondre le chocolat avec le beurre au bain-marie, ajouter les jaunes et le sucre, incorporer les blancs en neige et la crème fouettée. Réfrigérer {#} h.	Melt the chocolate with the butter in a bain-marie, add the yolks and sugar, fold in the whipped egg whites and whipped cream. Chill for {#} h.
+245	Desactualizados	Obsolètes	Out of date
+246	Descripción	Description	Description
+247	Merma	Perte	Waste
+248	Merma %	Perte %	Waste %
+249	Merma	Perte	Waste

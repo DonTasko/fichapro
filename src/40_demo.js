@@ -4,7 +4,7 @@
    ===================================================================== */
 const Demo = (() => {
   const I = (code, name, category, supplier, purchaseUnit, purchaseQty, price, vat, wastePct, allergens = [], extra = {}) => ({
-    id: 'demo-i-' + code, code: 'D' + code, name, category, supplier, purchaseUnit, purchaseQty, price, vat, priceIncludesVat: false, wastePct, allergens, traces: [], demo: true, priceUpdatedAt: U.todayISO(), ...extra,
+    id: 'demo-i-' + code, code: 'D' + code, name: tr(name), category: tr(category), supplier: tr(supplier), purchaseUnit, purchaseQty, price, vat, priceIncludesVat: false, wastePct, allergens, traces: [], demo: true, priceUpdatedAt: U.todayISO(), ...extra,
   });
   const ingredients = () => [
     I('001', 'Picanha de novilho', 'Carnes', 'Talho Demo', 'kg', 1, 16.9, 6, 8),
@@ -42,10 +42,12 @@ const Demo = (() => {
   const S = (rid, qty, unit) => ({ id: 'demo-l' + ++ln, kind: 'rec', refId: 'demo-r-' + rid, qty, unit, wastePct: null });
   const avg = (n = 1) => ({ mode: 'simultaneo', lines: [{ staffId: 'avg', count: n }] });
   const st = (id, n = 1) => ({ staffId: 'demo-s-' + id, count: n });
-  const R = (id, o) => ({
+  /** Categoria de venda equivalente no país do estabelecimento (mesma posição na lista). */
+  const demoCat = (pt) => { const i = COUNTRIES.PT.cats.findIndex((c) => c[0] === pt); const c = countryInfo().cats[i]; return c ? c[0] : pt; };
+  const R = (id, o0) => { const o = { ...o0, name: tr(o0.name), category: demoCat(o0.category), notes: tr(o0.notes || ''), temperature: tr(o0.temperature || ''), extras: (o0.extras || []).map((x) => ({ ...x, name: tr(x.name) })) }; return ({
     id: 'demo-r-' + id, demo: true, code: 'FT-D' + String(++rc).padStart(2, '0'), targetFC: null, vatRate: null, salePrice: null, sellable: true, intermediate: false,
     prepMin: 0, cookMin: 0, platingMin: 0, cleanMin: 0, laborIncludeCook: true, extras: [], equipment: [], allergenOverrides: { add: [], remove: [], traces: [], confirmed: false }, version: 0, ...o,
-  });
+  }); };
   const recipes = () => { ln = 0; rc = 0; return [
     R('molho', { name: 'Molho de cogumelos', category: 'Molhos e bases', type: 'molho', sellable: false, intermediate: true, portions: 10, finalQty: 1, finalUnit: 'l', prepMin: 15, cookMin: 20, labor: { mode: 'simultaneo', lines: [st('coz')] }, laborIncludeCook: false, equipment: [{ equipId: 'demo-e-fogao', minutes: 20 }],
       lines: [L('009', 0.5, 'kg'), L('014', 100, 'g'), L('013', 20, 'g'), L('011', 40, 'g'), L('010', 400, 'ml'), L('025', 100, 'ml'), L('018', 8, 'g'), L('019', 2, 'g')], notes: 'Saltear a cebola e o alho na manteiga, juntar os cogumelos laminados, refrescar com vinho branco, reduzir e ligar com as natas. Retificar temperos.', temperature: '' }),
@@ -68,21 +70,21 @@ const Demo = (() => {
       lines: [L('022', 250, 'g'), L('021', 6, 'un'), L('023', 80, 'g'), L('011', 50, 'g'), L('010', 200, 'ml')], notes: 'Derreter o chocolate com a manteiga em banho-maria, juntar gemas e açúcar, envolver claras em castelo e natas batidas. Refrigerar 4 h.', temperature: 'Conservar a 0–5 °C' }),
   ]; };
   const staff = () => [
-    { id: 'demo-s-coz', name: 'Cozinheiro de 1.ª (demo)', role: 'Cozinheiro', mode: 'salario', monthlySalary: 1150, chargesPct: 23.75, hoursMonth: 173.33, salariesYear: 14, hourlyCost: 0, active: true, demo: true },
-    { id: 'demo-s-aj', name: 'Ajudante de cozinha (demo)', role: 'Ajudante', mode: 'manual', hourlyCost: 9, active: true, demo: true },
-    { id: 'demo-s-past', name: 'Pasteleiro (demo)', role: 'Pasteleiro', mode: 'manual', hourlyCost: 10.5, active: true, demo: true },
+    { id: 'demo-s-coz', name: tr('Cozinheiro de 1.ª (demo)'), role: tr('Cozinheiro'), mode: 'salario', monthlySalary: 1150, chargesPct: 23.75, hoursMonth: 173.33, salariesYear: 14, hourlyCost: 0, active: true, demo: true },
+    { id: 'demo-s-aj', name: tr('Ajudante de cozinha (demo)'), role: tr('Ajudante'), mode: 'manual', hourlyCost: 9, active: true, demo: true },
+    { id: 'demo-s-past', name: tr('Pasteleiro (demo)'), role: tr('Pasteleiro'), mode: 'manual', hourlyCost: 10.5, active: true, demo: true },
   ];
   const equipment = () => [
-    { id: 'demo-e-forno', name: 'Forno convector (demo)', energyType: 'eletricidade', mode: 'potencia', powerKw: 7, usageFactor: 60, demo: true },
-    { id: 'demo-e-fogao', name: 'Fogão 4 bicos (demo)', energyType: 'gas', mode: 'potencia', powerKw: 10, usageFactor: 50, demo: true },
-    { id: 'demo-e-grelhador', name: 'Grelhador a gás (demo)', energyType: 'gas', mode: 'potencia', powerKw: 8, usageFactor: 60, demo: true },
-    { id: 'demo-e-frit', name: 'Fritadeira (demo)', energyType: 'eletricidade', mode: 'potencia', powerKw: 6, usageFactor: 70, demo: true },
+    { id: 'demo-e-forno', name: tr('Forno convector (demo)'), energyType: 'eletricidade', mode: 'potencia', powerKw: 7, usageFactor: 60, demo: true },
+    { id: 'demo-e-fogao', name: tr('Fogão 4 bicos (demo)'), energyType: 'gas', mode: 'potencia', powerKw: 10, usageFactor: 50, demo: true },
+    { id: 'demo-e-grelhador', name: tr('Grelhador a gás (demo)'), energyType: 'gas', mode: 'potencia', powerKw: 8, usageFactor: 60, demo: true },
+    { id: 'demo-e-frit', name: tr('Fritadeira (demo)'), energyType: 'eletricidade', mode: 'potencia', powerKw: 6, usageFactor: 70, demo: true },
   ];
   const opcosts = () => [
-    { id: 'demo-o-agua', type: 'agua', name: 'Água (demo)', monthly: 120, include: true, demo: true },
-    { id: 'demo-o-limp', type: 'limpeza', name: 'Produtos de limpeza (demo)', monthly: 180, include: true, demo: true },
-    { id: 'demo-o-cons', type: 'consumiveis', name: 'Consumíveis — guardanapos, película, papel (demo)', monthly: 150, include: true, demo: true },
-    { id: 'demo-o-elet', type: 'eletricidade', name: 'Eletricidade não associada a equipamentos — frio, iluminação (demo)', monthly: 450, include: true, demo: true },
+    { id: 'demo-o-agua', type: 'agua', name: tr('Água (demo)'), monthly: 120, include: true, demo: true },
+    { id: 'demo-o-limp', type: 'limpeza', name: tr('Produtos de limpeza (demo)'), monthly: 180, include: true, demo: true },
+    { id: 'demo-o-cons', type: 'consumiveis', name: tr('Consumíveis — guardanapos, película, papel (demo)'), monthly: 150, include: true, demo: true },
+    { id: 'demo-o-elet', type: 'eletricidade', name: tr('Eletricidade não associada a equipamentos — frio, iluminação (demo)'), monthly: 450, include: true, demo: true },
   ];
 
   async function load() {

@@ -3,10 +3,10 @@
    ===================================================================== */
 const Reports = (() => {
   const H = (v) => ({ v, t: 'head' }), E = (v) => ({ v: U.ok(v) ? U.round(v, 4) : null, t: 'eur' }), P = (v) => ({ v: U.ok(v) ? v : null, t: 'pct' }), N = (v) => ({ v: U.ok(v) ? v : null, t: 'num' });
-  const header = (title, sub = '') => { const st = getSettings(); return `<div class="ph"><div><div style="font-size:11px;color:#15a06d;font-weight:700;text-transform:uppercase;letter-spacing:.06em">${h(st.businessName)}</div><h1>${h(title)}</h1>${sub ? `<div>${sub}</div>` : ''}</div><div style="text-align:right;font-size:10.5px">Emitido em ${U.fmtDateTime(U.nowISO())}</div></div>`; };
+  const header = (title, sub = '') => { const st = getSettings(); return `<div class="ph"><div><div style="font-size:11px;color:#15a06d;font-weight:700;text-transform:uppercase;letter-spacing:.06em">${h(st.businessName)}</div><h1>${h(title)}</h1>${sub ? `<div>${sub}</div>` : ''}</div><div style="text-align:right;font-size:10.5px">${h(tr('Emitido em'))} <span data-notr>${U.fmtDateTime(U.nowISO())}</span></div></div>`; };
   const foot = () => `<div class="foot">Documento gerado pela aplicação de fichas técnicas. Valores de custo estimados com base nos dados introduzidos. Margens e lucros apresentados não correspondem ao lucro líquido do negócio.</div>`;
   const toHtmlTable = (rows) => { const [hd, ...body] = rows; const cell = (c) => { const v = c && typeof c === 'object' ? c : { v: c }; if (v.v === null || v.v === undefined || v.v === '') return ''; if (v.t === 'eur' || v.t === 'eurb') return U.eur(v.v); if (v.t === 'pct') return U.pct(v.v); if (v.t === 'num') return U.numMax(v.v, 3); return h(v.v); }; const al = (c) => (c && typeof c === 'object' && ['eur', 'pct', 'num', 'eurb'].includes(c.t) ? ' class="r"' : ''); return `<table><thead><tr>${hd.map((c) => `<th>${h(c && typeof c === 'object' ? c.v : c)}</th>`).join('')}</tr></thead><tbody>${body.map((r) => `<tr>${r.map((c) => `<td${al(c)}>${cell(c)}</td>`).join('')}</tr>`).join('')}</tbody></table>`; };
-  const algNames = (ids) => ids.map((i) => ALLERGEN_BY_ID[i].short).join(', ');
+  const algNames = (ids) => ids.map((i) => tr(ALLERGEN_BY_ID[i].short)).join(', ');
   const sellable = () => computeAll().filter((x) => x.r.sellable !== false).sort((a, b) => a.r.name.localeCompare(b.r.name, 'pt'));
 
   function recipeDoc(rec, opts = {}) {
@@ -15,12 +15,12 @@ const Reports = (() => {
     const p = Calc.pricing(rec, c, data.settings);
     const m = Calc.laborMinutes(rec);
     const ul = (u) => (u === 'dose' ? 'dose' : u === 'emb' ? 'emb' : UNITS[u] ? UNITS[u].label : u);
-    return `${header('Ficha técnica — ' + rec.name, `${h(rec.code || '')} · ${h(rec.category || '')} · ${h(typeLabel(rec.type))}${rec.demo ? ' · <b>DEMONSTRAÇÃO</b>' : ''}`)}
+    return `${header(tr('Ficha técnica') + ' — ' + rec.name, `${h(rec.code || '')} · ${h(tr(rec.category || ''))} · ${h(tr(typeLabel(rec.type)))}${rec.demo ? ' · <b>' + tr('DEMONSTRAÇÃO') + '</b>' : ''}`)}
       <div style="display:flex;gap:14px">${rec.photo ? `<img src="${rec.photo}" style="width:170px;height:128px;object-fit:cover;border-radius:6px">` : ''}
       <div class="meta" style="flex:1"><div><b>Doses:</b> ${U.numMax(rec.portions)}</div><div><b>Quantidade final:</b> ${rec.finalQty ? U.numMax(rec.finalQty) + ' ' + ul(rec.finalUnit) : '—'}</div><div><b>Preparação:</b> ${m.prep} min</div><div><b>Confeção:</b> ${m.cook} min</div>
       <div><b>Empratamento:</b> ${m.plat} min</div><div><b>Limpeza:</b> ${m.clean} min</div><div><b>Tempo total:</b> ${m.total} min</div><div><b>Temperatura:</b> ${h(rec.temperature || '—')}</div></div></div>
       <h2>Ingredientes</h2><table><thead><tr><th>Ingrediente</th><th>Qtd. líquida</th><th>Desp.</th><th>Qtd. bruta</th><th>Preço unit.</th><th>Custo efetivo</th><th>Alergénios</th></tr></thead><tbody>
-      ${c.lines.map((L) => `<tr><td>${h(L.name)}${L.kind === 'rec' ? ' (preparação)' : ''}${L.error ? ' — <b style="color:#c00">' + h(L.error) + '</b>' : ''}</td><td>${U.numMax(L.qty)} ${ul(L.unit)}</td><td>${U.num(L.wastePct, 1)} %</td><td>${U.ok(L.grossQty) ? U.numMax(L.grossQty) + ' ' + ul(L.unit) : '—'}</td><td>${h(fmtUnitPrice(L.unitPrice, L.unit))}</td><td class="r">${U.eur(L.effCost)}</td><td>${algNames(L.allergens)}</td></tr>`).join('')}
+      ${c.lines.map((L) => `<tr><td>${h(L.name)}${L.kind === 'rec' ? ' (' + tr('preparação') + ')' : ''}${L.error ? ' — <b style="color:#c00">' + h(L.error) + '</b>' : ''}</td><td>${U.numMax(L.qty)} ${ul(L.unit)}</td><td>${U.num(L.wastePct, 1)} %</td><td>${U.ok(L.grossQty) ? U.numMax(L.grossQty) + ' ' + ul(L.unit) : '—'}</td><td>${h(fmtUnitPrice(L.unitPrice, L.unit))}</td><td class="r">${U.eur(L.effCost)}</td><td>${algNames(L.allergens)}</td></tr>`).join('')}
       </tbody><tfoot><tr><td colspan="5">Total matérias-primas</td><td class="r">${U.eur(c.materials)}</td><td></td></tr></tfoot></table>
       ${rec.notes ? `<h2>Modo de preparação</h2><div style="white-space:pre-wrap">${h(rec.notes)}</div>` : ''}
       <h2>Estiva de custos</h2><table><thead><tr><th>Componente</th><th>Lote</th><th>Por dose</th></tr></thead><tbody>
@@ -36,7 +36,7 @@ const Reports = (() => {
   function allergenDoc(recs, opts = {}) {
     const data = dataView(opts.draft && recs.length === 1 ? { recipe: recs[0] } : undefined);
     const ev = Calc.evaluator(data);
-    return `${header('Informação sobre alergénios', 'Regulamento (UE) n.º 1169/2011 — 14 substâncias ou produtos que provocam alergias ou intolerâncias')}
+    return `${header('Informação sobre alergénios', h(countryInfo().law) + ' — ' + h(tr('14 substâncias ou produtos que provocam alergias ou intolerâncias')))}
       <table><thead><tr><th style="width:28%">Prato / produto</th>${ALLERGENS.map((a) => `<th style="text-align:center;font-size:9px">${algBadge(a.id)}<br>${h(a.short)}</th>`).join('')}</tr></thead><tbody>
       ${recs.map((r) => { const a = ev.cost(r).allergens; return `<tr><td><b>${h(r.name)}</b></td>${ALLERGENS.map((x) => `<td style="text-align:center">${a.present.includes(x.id) ? algBadge(x.id) : a.traces.includes(x.id) ? algBadge(x.id, true) : ''}</td>`).join('')}</tr>`; }).join('')}
       </tbody></table><div style="font-size:10.5px">Círculo cheio: contém · Círculo tracejado: pode conter vestígios (contaminação cruzada).</div>
@@ -113,6 +113,7 @@ Views.relatorios = (el) => {
 /* ------------------------------ ARRANQUE ------------------------------ */
 window.addEventListener('unhandledrejection', (e) => { const m = e.reason && e.reason.message; if (m) toast(m, 'err'); });
 (async function boot() {
+  I18N.start();
   $('#view').innerHTML = '<div class="empty">A carregar…</div>';
   try {
     const red = await Auth.handleRedirect();
@@ -127,6 +128,9 @@ window.addEventListener('unhandledrejection', (e) => { const m = e.reason && e.r
     catch (e) { $('#view').innerHTML = `<div class="alert err">Não foi possível abrir o armazenamento local: ${h(e.message)}</div>`; return; }
     if (!Repo.get('meta', 'settings')) { await saveSettings({ firstRun: U.nowISO() }); if (!Repo.all('ingredients').length && !Repo.all('recipes').length) await Demo.load(); }
   }
+  if (!Repo.get('meta', 'settings')) await saveSettings({});
+  applyCountry();
+  Repo.on((type, stores) => { if (type === 'meta' || (type === 'remote' && (stores || []).includes('meta'))) applyCountry(); });
   // alterações vindas de outros dispositivos: atualiza o ecrã sem interromper quem está a escrever
   let pendingRender = false;
   const rerender = () => {

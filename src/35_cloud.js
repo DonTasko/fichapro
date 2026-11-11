@@ -248,7 +248,7 @@ const Sync = {
     if (!this.adapter) { el.innerHTML = ''; return; }
     const s = this.adapter.state;
     const [cls, txt] = !s.online ? ['amber', 'Sem ligação' + (s.pending ? ` · ${s.pending} por enviar` : '')] : s.error ? ['red', 'Erro de sincronização'] : s.pending || s.syncing ? ['blue', 'A sincronizar…'] : ['green', 'Sincronizado'];
-    el.innerHTML = `<span class="badge ${cls}" title="${h(s.error || (s.lastSync ? 'Última sincronização: ' + U.fmtDateTime(s.lastSync) : ''))}">● ${h(txt)}</span>`;
+    el.innerHTML = `<span class="badge ${cls}" title="${h(s.error || (s.lastSync ? tr('Última sincronização') + ': ' + U.fmtDateTime(s.lastSync) : ''))}">● ${h(txt)}</span>`;
   },
   sessionLost() { if (this._lost) return; this._lost = true; toast('A sessão expirou. Entre novamente para continuar a sincronizar.', 'err'); },
 };

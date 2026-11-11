@@ -114,29 +114,40 @@ const Repo = (() => {
 })();
 
 /* ---------- Configurações ---------- */
-const DEFAULT_SETTINGS = {
-  id: 'settings',
-  businessName: 'O meu restaurante',
-  vatDeductible: true,
-  targetFC: 30, tierDelta: 5, fcBase: 'materias',
-  roundingEnabled: true, roundingEndings: '0,50; 0,90',
-  defaultSaleVat: 13,
-  saleCategories: [
-    { name: 'Pratos principais', vat: 13 }, { name: 'Entradas', vat: 13 }, { name: 'Acompanhamentos', vat: 13 },
-    { name: 'Sobremesas', vat: 13 }, { name: 'Molhos e bases', vat: 13 }, { name: 'Pastelaria', vat: 13 }, { name: 'Cafetaria', vat: 13 },
-    { name: 'Bebidas alcoólicas', vat: 23 }, { name: 'Refrigerantes e sumos', vat: 23 },
-  ],
-  ingredientCategories: ['Carnes', 'Peixes e mariscos', 'Legumes e hortícolas', 'Frutas', 'Laticínios e ovos', 'Mercearia', 'Gorduras e óleos', 'Especiarias e ervas', 'Bebidas', 'Pastelaria', 'Congelados', 'Outros'],
-  staleDays: 90,
-  electricityPrice: 0.16, gasPrice: 0.09,
-  teamAvgMode: 'auto', teamAvgManual: 9,
-  indirect: { method: 'none', percent: 5, dosesPerMonth: 2000, includesEnergy: false, includesPackaging: false },
-};
+const INGREDIENT_CATEGORIES = ['Carnes', 'Peixes e mariscos', 'Legumes e hortícolas', 'Frutas', 'Laticínios e ovos', 'Mercearia', 'Gorduras e óleos', 'Especiarias e ervas', 'Bebidas', 'Pastelaria', 'Congelados', 'Outros'];
+/** Configurações predefinidas para um país (categorias e taxas de imposto do país, nomes na língua atual). */
+function defaultSettings(country) {
+  const c = COUNTRIES[country] || COUNTRIES.PT;
+  return {
+    id: 'settings', country: COUNTRIES[country] ? country : 'PT',
+    businessName: tr('O meu restaurante'),
+    vatDeductible: true,
+    targetFC: 30, tierDelta: 5, fcBase: 'materias',
+    roundingEnabled: true, roundingEndings: c.rounding,
+    defaultSaleVat: c.defaultSaleVat,
+    saleCategories: c.cats.map(([name, vat]) => ({ name, vat })),
+    ingredientCategories: INGREDIENT_CATEGORIES.map((x) => tr(x)),
+    staleDays: 90,
+    electricityPrice: country === 'GB' ? 0.25 : 0.16, gasPrice: country === 'GB' ? 0.07 : 0.09,
+    teamAvgMode: 'auto', teamAvgManual: country === 'GB' ? 12.5 : 9,
+    indirect: { method: 'none', percent: 5, dosesPerMonth: 2000, includesEnergy: false, includesPackaging: false },
+  };
+}
 function getSettings() {
   const s = Repo.get('meta', 'settings');
-  const merged = { ...U.clone(DEFAULT_SETTINGS), ...(s || {}) };
-  merged.indirect = { ...DEFAULT_SETTINGS.indirect, ...((s && s.indirect) || {}) };
+  // estabelecimentos antigos (sem país) são de Portugal; novos usam o país da língua do dispositivo
+  const country = (s && s.country) || (s ? 'PT' : COUNTRY_BY_LANG[I18N.lang] || 'PT');
+  const d = defaultSettings(country);
+  const merged = { ...d, ...(s || {}), country };
+  merged.indirect = { ...d.indirect, ...((s && s.indirect) || {}) };
   return merged;
+}
+const countryInfo = () => COUNTRIES[getSettings().country] || COUNTRIES.PT;
+/** Aplica moeda e formatação do país do estabelecimento. */
+function applyCountry() {
+  const c = countryInfo();
+  U.setLocale(c.locale, c.currency);
+  I18N.setCurrencySymbol(c.currency === 'GBP' ? '£' : '€');
 }
 async function saveSettings(patch) {
   const s = { ...getSettings(), ...patch, id: 'settings' };

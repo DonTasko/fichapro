@@ -28,7 +28,7 @@ async def main():
     async with async_playwright() as p:
         b = await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
         ctx = await b.new_context(viewport={'width': 412, 'height': 900}); await ctx.route(BASE + '/**', handle)
-        await ctx.add_init_script(FAKE)
+        await ctx.add_init_script(FAKE); await ctx.add_init_script("localStorage.getItem('fp_lang')||localStorage.setItem('fp_lang','pt')")
         pg = await ctx.new_page(); errs = []; pg.on('pageerror', lambda e: errs.append(str(e)))
         await pg.goto(URL); await pg.wait_for_timeout(600)
         await pg.click('#gCloud'); await pg.click('[data-t=signup]')

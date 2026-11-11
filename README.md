@@ -45,3 +45,9 @@ Na primeira abertura são carregados dados de demonstração (preços fictícios
 - A identificação de alergénios é um apoio e deve ser confirmada pelo responsável.
 - As taxas de IVA predefinidas são exemplos; confirme-as com o seu contabilista.
 - Margens e lucros apresentados são estimativas por produto, não o lucro líquido do negócio.
+
+## Línguas
+
+Português (fonte), Español, Français e English (UK). A língua segue o navegador e pode ser mudada no ecrã inicial ou em Configurações. Cada língua escolhe um país por omissão (PT, ES, FR, GB), que define moeda, formato dos números, taxas de IVA, arredondamentos e a lei de alergénios citada.
+
+As traduções estão em `i18n/*.tsv` (chave portuguesa → es, fr, en). Para regenerar `src/06_lang_*.js`: `cd i18n && python3 gen.py`, depois `bash build.sh`. Para listar textos ainda por traduzir: `python3 tests/collect.py es`.

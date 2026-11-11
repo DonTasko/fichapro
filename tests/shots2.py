@@ -4,7 +4,7 @@ URL='file:///home/claude/ft/dist/FichaPro.html'
 async def main():
   async with async_playwright() as p:
     b=await p.chromium.launch(executable_path='/usr/bin/google-chrome', args=['--no-sandbox'])
-    pg=await b.new_page(viewport={'width':1400,'height':900}); await pg.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"')"); errs=[]
+    pg=await b.new_page(viewport={'width':1400,'height':900}); await pg.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"');localStorage.getItem('fp_lang')||localStorage.setItem('fp_lang','pt')"); errs=[]
     pg.on('pageerror', lambda e: errs.append(str(e)))
     await pg.goto(URL); await pg.wait_for_timeout(1200)
     await pg.evaluate("location.hash='#/ficha/demo-r-lombinho'"); await pg.wait_for_timeout(400)
@@ -27,7 +27,7 @@ async def main():
     await pg.emulate_media(media='print'); await pg.pdf(path='shots/alergenios.pdf', format='A4', print_background=True)
     await pg.emulate_media(media='screen'); await pg.evaluate("document.body.classList.remove('printing')")
     # mobile
-    m=await b.new_page(viewport={'width':390,'height':844}); await m.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"')"); await m.goto(URL+'#/produtos'); await m.wait_for_timeout(1200)
+    m=await b.new_page(viewport={'width':390,'height':844}); await m.add_init_script("localStorage.getItem('fp_mode')||localStorage.setItem('fp_mode','\"local\"');localStorage.getItem('fp_lang')||localStorage.setItem('fp_lang','pt')"); await m.goto(URL+'#/produtos'); await m.wait_for_timeout(1200)
     await m.screenshot(path='shots/mobile.png', full_page=False)
     print(errs or 'sem erros')
     await b.close()

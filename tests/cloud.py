@@ -108,6 +108,7 @@ async def main():
         async def device(name):
             ctx = await b.new_context(viewport={'width': 1300, 'height': 900})
             await ctx.route(BASE + '/**', mock.handle)
+            await ctx.add_init_script("localStorage.getItem('fp_lang')||localStorage.setItem('fp_lang','pt')")
             pg = await ctx.new_page()
             pg.on('pageerror', lambda e: errs.append(name + ': ' + str(e)))
             pg.on('dialog', lambda d: asyncio.ensure_future(d.dismiss()))
