@@ -154,6 +154,15 @@ td input.num{width:86px}
 .matrix td.c{padding:4px}
 .inline-edit{width:90px}
 #print-area{display:none}
+#gate{position:fixed;inset:0;background:linear-gradient(135deg,#0f2742,#1f4b7e);display:flex;align-items:flex-start;justify-content:center;padding:6vh 14px;overflow-y:auto;z-index:50}
+#gate[hidden]{display:none}
+.gate-card{background:#fff;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;max-width:440px;padding:26px}
+.gate-brand{font-size:20px;font-weight:700;color:var(--navy);margin-bottom:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gate-brand .dot{width:11px;height:11px;border-radius:50%;background:var(--green);display:inline-block}
+.gate-brand small{width:100%;font-size:12px;font-weight:400;color:var(--muted);margin-left:19px}
+.gate-big{display:flex;flex-direction:column;align-items:flex-start;gap:3px;width:100%;padding:13px 14px;text-align:left;white-space:normal;margin-bottom:8px}
+.gate-big span{font-weight:400;font-size:12.5px;opacity:.85}
+.gate-links{display:flex;justify-content:space-between;margin-top:14px;font-size:13px;gap:10px;flex-wrap:wrap}
 @media (max-width:1100px){.editor{grid-template-columns:1fr}.sticky{position:static}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:820px){
   #sidebar{position:fixed;left:-260px;transition:left .2s}
@@ -199,11 +208,13 @@ td input.num{width:86px}
     <header class="topbar">
       <button class="btn icon" id="menuBtn" aria-label="Menu">☰</button>
       <h1 id="pageTitle">Dashboard</h1>
+      <span id="syncBadge"></span>
       <button class="btn sm" id="quickBackup" title="Exportar cópia de segurança">⤓ Cópia de segurança</button>
     </header>
     <div id="view"></div>
   </main>
 </div>
+<div id="gate" hidden></div>
 <div id="modal-root"></div>
 <div id="toast-root"></div>
 <div id="print-area"></div>
@@ -1006,15 +1017,16 @@ const IO = (() => {
    um adaptador com os mesmos métodos (getAll, put, bulkPut, delete, clear).
    ===================================================================== */
 const SCHEMA_VERSION = 1;
+const LOCAL_DB_NAME = 'fichas-tecnicas-hotelaria';
 const STORES = ['ingredients', 'recipes', 'staff', 'equipment', 'opcosts', 'priceHistory', 'recipeVersions', 'meta'];
 
 class IDBAdapter {
-  constructor(name) { this.name = name; this.kind = 'IndexedDB'; }
+  constructor(name, stores = STORES) { this.name = name; this.stores = stores; this.kind = 'Local (IndexedDB)'; }
   open() {
     return new Promise((resolve, reject) => {
       if (typeof indexedDB === 'undefined') return reject(new Error('IndexedDB indisponível'));
       const req = indexedDB.open(this.name, 1);
-      req.onupgradeneeded = () => { const db = req.result; STORES.forEach((s) => { if (!db.objectStoreNames.contains(s)) db.createObjectStore(s, { keyPath: 'id' }); }); };
+      req.onupgradeneeded = () => { const db = req.result; this.stores.forEach((s) => { if (!db.objectStoreNames.contains(s)) db.createObjectStore(s, { keyPath: 'id' }); }); };
       req.onsuccess = () => { this.db = req.result; resolve(this); };
       req.onerror = () => reject(req.error);
       req.onblocked = () => reject(new Error('Base de dados bloqueada por outro separador'));
@@ -1039,7 +1051,7 @@ class IDBAdapter {
   clear(store) { return this.tx(store, 'readwrite', (s) => { s.clear(); }); }
 }
 class LocalStorageAdapter {
-  constructor(name) { this.name = name; this.kind = 'localStorage'; }
+  constructor(name) { this.name = name; this.kind = 'Local (localStorage)'; }
   async open() { return this; }
   key(s) { return this.name + ':' + s; }
   read(s) { try { return JSON.parse(localStorage.getItem(this.key(s)) || '{}'); } catch { return {}; } }
@@ -1058,9 +1070,13 @@ const Repo = (() => {
   const listeners = new Set();
   let persisted = null;
 
-  async function init() {
-    try { adapter = await new IDBAdapter('fichas-tecnicas-hotelaria').open(); }
-    catch (e) { console.warn('IndexedDB falhou, a usar localStorage', e); adapter = await new LocalStorageAdapter('fichas-tecnicas-hotelaria').open(); }
+  /** custom: adaptador alternativo (ex.: nuvem). Sem ele usa o armazenamento local do navegador. */
+  async function init(custom) {
+    if (custom) adapter = await custom.open();
+    else {
+      try { adapter = await new IDBAdapter(LOCAL_DB_NAME).open(); }
+      catch (e) { console.warn('IndexedDB falhou, a usar localStorage', e); adapter = await new LocalStorageAdapter(LOCAL_DB_NAME).open(); }
+    }
     for (const s of STORES) { const all = await adapter.getAll(s); cache[s] = new Map(all.map((o) => [o.id, o])); }
     try { if (navigator.storage && navigator.storage.persist) persisted = await navigator.storage.persist(); } catch { persisted = null; }
     return adapter.kind;
@@ -1069,11 +1085,12 @@ const Repo = (() => {
   const all = (s) => [...cache[s].values()];
   const get = (s, id) => cache[s].get(id);
   const map = (s) => cache[s];
-  async function save(s, obj) { if (!obj.id) obj.id = U.uid(); cache[s].set(obj.id, obj); await adapter.put(s, obj); notify(s); return obj; }
-  async function saveMany(s, arr) { arr.forEach((o) => { if (!o.id) o.id = U.uid(); cache[s].set(o.id, o); }); await adapter.bulkPut(s, arr); notify(s); }
-  async function remove(s, id) { cache[s].delete(id); await adapter.delete(s, id); notify(s); }
-  async function removeMany(s, ids) { ids.forEach((id) => cache[s].delete(id)); await adapter.bulkDelete(s, ids); notify(s); }
-  async function clearAll() { for (const s of STORES) { cache[s].clear(); await adapter.clear(s); } notify('*'); }
+  // grava primeiro no adaptador: se for recusado (ex.: conta só de leitura) a cache não fica inconsistente
+  async function save(s, obj) { if (!obj.id) obj.id = U.uid(); await adapter.put(s, obj); cache[s].set(obj.id, obj); notify(s); return obj; }
+  async function saveMany(s, arr) { arr.forEach((o) => { if (!o.id) o.id = U.uid(); }); if (arr.length) await adapter.bulkPut(s, arr); arr.forEach((o) => cache[s].set(o.id, o)); notify(s); }
+  async function remove(s, id) { await adapter.delete(s, id); cache[s].delete(id); notify(s); }
+  async function removeMany(s, ids) { if (ids.length) await adapter.bulkDelete(s, ids); ids.forEach((id) => cache[s].delete(id)); notify(s); }
+  async function clearAll() { for (const s of STORES) { await adapter.clear(s); cache[s].clear(); } notify('*'); }
 
   function exportAll() {
     const out = { app: 'fichas-tecnicas-hotelaria', schema: SCHEMA_VERSION, exportedAt: U.nowISO(), data: {} };
@@ -1091,11 +1108,21 @@ const Repo = (() => {
   }
   async function importAll(obj, mode = 'replace') {
     validateBackup(obj);
-    if (mode === 'replace') for (const s of STORES) { cache[s].clear(); await adapter.clear(s); }
-    for (const s of STORES) { const arr = obj.data[s] || []; if (arr.length) { arr.forEach((o) => cache[s].set(o.id, o)); await adapter.bulkPut(s, arr); } }
+    if (mode === 'replace') for (const s of STORES) { await adapter.clear(s); cache[s].clear(); }
+    for (const s of STORES) { const arr = obj.data[s] || []; if (arr.length) { await adapter.bulkPut(s, arr); arr.forEach((o) => cache[s].set(o.id, o)); } }
     notify('*');
   }
-  return { init, all, get, map, save, saveMany, remove, removeMany, clearAll, exportAll, importAll, validateBackup, on: (fn) => listeners.add(fn), get kind() { return adapter ? adapter.kind : '—'; }, get persisted() { return persisted; } };
+  /** Alterações vindas de outro dispositivo (sincronização): atualiza a cache sem voltar a gravar. */
+  function applyRemote(changes) {
+    const touched = new Set();
+    for (const c of changes) {
+      if (!cache[c.store]) continue;
+      if (c.deleted) cache[c.store].delete(c.id); else cache[c.store].set(c.id, c.data);
+      touched.add(c.store);
+    }
+    if (touched.size) listeners.forEach((fn) => fn('remote', [...touched]));
+  }
+  return { init, applyRemote, get adapter() { return adapter; }, all, get, map, save, saveMany, remove, removeMany, clearAll, exportAll, importAll, validateBackup, on: (fn) => listeners.add(fn), get kind() { return adapter ? adapter.kind : '—'; }, get persisted() { return persisted; } };
 })();
 
 /* ---------- Configurações ---------- */
@@ -1188,6 +1215,264 @@ const Services = (() => {
   }
   return { saveIngredient, saveRecipe, deleteRecipe, recipeCostsUsing };
 })();
+
+/* =====================================================================
+   MÓDULO 3B — NUVEM (Supabase) — autenticação, multi-cliente e sincronização
+   Sem bibliotecas externas: usa diretamente as APIs REST do Supabase
+   (Auth/GoTrue e PostgREST). A chave publicável é pública por natureza;
+   a segurança está nas políticas RLS da base de dados.
+   ===================================================================== */
+const CLOUD = {
+  url: 'https://pqrqxvpzxqwblhxtmdns.supabase.co',
+  key: 'sb_publishable_Vuk6Fzf26IbLGjjTGNL_5A_8vzr9B2U',
+};
+const LS = {
+  get(k, d = null) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) { try { if (v === null || v === undefined) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+};
+class CloudError extends Error { constructor(msg, status, code) { super(msg); this.status = status; this.code = code; } }
+
+/* ---------------------------- Autenticação ---------------------------- */
+const Auth = (() => {
+  let session = LS.get('fp_session');
+  const save = (s) => { session = s; LS.set('fp_session', s); };
+  const errMsg = (j, status) => {
+    const m = (j && (j.msg || j.error_description || j.message || j.error)) || 'Erro ' + status;
+    const map = {
+      'Invalid login credentials': 'Email ou palavra-passe incorretos.',
+      'Email not confirmed': 'Ainda não confirmou o email. Abra a mensagem que recebeu e clique no link.',
+      'User already registered': 'Já existe uma conta com este email. Use "Entrar".',
+    };
+    for (const [k, v] of Object.entries(map)) if (m.includes(k)) return v;
+    if (/Password should be at least/i.test(m)) return 'A palavra-passe tem de ter pelo menos 6 caracteres.';
+    if (/rate limit/i.test(m)) return 'Demasiadas tentativas. Aguarde alguns minutos.';
+    return m;
+  };
+  async function call(path, { method = 'POST', body, token } = {}) {
+    let r;
+    try {
+      r = await fetch(CLOUD.url + '/auth/v1' + path, { method, headers: { apikey: CLOUD.key, 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}) }, body: body ? JSON.stringify(body) : undefined });
+    } catch { throw new CloudError('Sem ligação à internet', 0, 'offline'); }
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new CloudError(errMsg(j, r.status), r.status, j.error_code || j.code);
+    return j;
+  }
+  const fromToken = (j) => ({ access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Math.floor(Date.now() / 1000) + (Number(j.expires_in) || 3600), user: { id: j.user.id, email: j.user.email } });
+  const redirectTo = () => location.origin + location.pathname;
+  return {
+    get session() { return session; },
+    get user() { return session && session.user; },
+    async signUp(email, password) {
+      const j = await call('/signup?redirect_to=' + encodeURIComponent(redirectTo()), { body: { email, password } });
+      if (j.access_token) { save(fromToken(j)); return { confirmed: true }; }
+      return { confirmed: false };
+    },
+    async signIn(email, password) { save(fromToken(await call('/token?grant_type=password', { body: { email, password } }))); },
+    async recover(email) { await call('/recover?redirect_to=' + encodeURIComponent(redirectTo()), { body: { email } }); },
+    async updatePassword(password) { await call('/user', { method: 'PUT', body: { password }, token: await this.token() }); },
+    async signOut() { const t = session && session.access_token; save(null); if (t) await call('/logout', { token: t }).catch(() => {}); },
+    /** Token válido (renova automaticamente). */
+    async token(force = false) {
+      if (!session) throw new CloudError('Sessão terminada. Entre novamente.', 401, 'no_session');
+      if (force || session.expires_at - 60 < Date.now() / 1000) {
+        try { save(fromToken(await call('/token?grant_type=refresh_token', { body: { refresh_token: session.refresh_token } }))); }
+        catch (e) { if (e.code !== 'offline') { save(null); throw new CloudError('Sessão expirada. Entre novamente.', 401, 'expired'); } throw e; }
+      }
+      return session.access_token;
+    },
+    /** Trata o regresso de links de email (confirmação de conta, recuperação de palavra-passe). */
+    async handleRedirect() {
+      const hsh = location.hash;
+      if (!/access_token=|error_description=/.test(hsh)) return null;
+      const p = new URLSearchParams(hsh.slice(1));
+      history.replaceState(null, '', location.pathname + location.search);
+      if (p.get('error_description')) return { error: p.get('error_description').replace(/\+/g, ' ') };
+      const u = await call('/user', { method: 'GET', token: p.get('access_token') });
+      save({ access_token: p.get('access_token'), refresh_token: p.get('refresh_token'), expires_at: Math.floor(Date.now() / 1000) + (Number(p.get('expires_in')) || 3600), user: { id: u.id, email: u.email } });
+      return { type: p.get('type') || 'signup' };
+    },
+  };
+})();
+
+/* ---------------------------- API REST (PostgREST) ---------------------------- */
+const Api = {
+  async req(path, { method = 'GET', body, prefer, retry = true } = {}) {
+    const token = await Auth.token();
+    let r;
+    try {
+      r = await fetch(CLOUD.url + '/rest/v1/' + path, { method, headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + token, 'Content-Type': 'application/json', ...(prefer ? { Prefer: prefer } : {}) }, body: body !== undefined ? JSON.stringify(body) : undefined });
+    } catch { throw new CloudError('Sem ligação à internet', 0, 'offline'); }
+    if (r.status === 401 && retry) { await Auth.token(true); return this.req(path, { method, body, prefer, retry: false }); }
+    const txt = await r.text();
+    const j = txt ? JSON.parse(txt) : null;
+    if (!r.ok) {
+      const code = j && j.code;
+      if (code === '42501' || r.status === 403) throw new CloudError('Sem permissão para gravar (conta em modo de consulta ou período de teste terminado).', 403, 'forbidden');
+      throw new CloudError((j && (j.message || j.hint)) || 'Erro do servidor (' + r.status + ')', r.status, code);
+    }
+    return j;
+  },
+  rpc(fn, args = {}) { return this.req('rpc/' + fn, { method: 'POST', body: args }); },
+};
+
+/* ---------------------------- Estabelecimentos (tenants) ---------------------------- */
+const Tenants = {
+  list: [], current: null, role: null,
+  async load() {
+    await Api.rpc('fp_accept_invites').catch(() => 0);
+    const [tenants, mem] = await Promise.all([Api.req('fp_tenants?select=*&order=created_at'), Api.req('fp_members?select=tenant_id,role&user_id=eq.' + Auth.user.id)]);
+    const roles = Object.fromEntries(mem.map((m) => [m.tenant_id, m.role]));
+    this.list = tenants.map((t) => ({ ...t, role: roles[t.id] }));
+    LS.set('fp_tenants_cache_' + Auth.user.id, this.list);
+    return this.list;
+  },
+  loadCached() { this.list = LS.get('fp_tenants_cache_' + (Auth.user && Auth.user.id), []); return this.list; },
+  select(id) {
+    const t = this.list.find((x) => x.id === id);
+    if (!t) return null;
+    this.current = t; this.role = t.role;
+    LS.set('fp_tenant_' + Auth.user.id, id);
+    return t;
+  },
+  savedId() { return Auth.user ? LS.get('fp_tenant_' + Auth.user.id) : null; },
+  async create(name) { return Api.rpc('fp_create_tenant', { p_name: name }); },
+  status(t = this.current) {
+    if (!t) return { canWrite: false, label: '—' };
+    const now = Date.now();
+    const roleOk = ['owner', 'admin', 'editor'].includes(t.role);
+    const paid = t.plan === 'active' || (t.paid_until && new Date(t.paid_until).getTime() > now);
+    const trialLeft = Math.ceil((new Date(t.trial_ends_at).getTime() - now) / 86400000);
+    const trialOk = t.plan === 'trial' && trialLeft > 0;
+    let label = paid ? 'Subscrição ativa' : trialOk ? `Período de teste: ${trialLeft} dia(s) restantes` : t.plan === 'trial' ? 'Período de teste terminado' : t.plan === 'past_due' ? 'Pagamento em atraso' : 'Subscrição cancelada';
+    return { canWrite: roleOk && (paid || trialOk), roleOk, paid, trialOk, trialLeft, label };
+  },
+  roleLabel: (r) => ({ owner: 'Proprietário', admin: 'Administrador', editor: 'Editor', viewer: 'Só consulta' }[r] || r),
+};
+
+/* ---------------------------- Adaptador de nuvem com cache local ---------------------------- */
+/* Escreve primeiro localmente (funciona sem rede) e envia para a nuvem em segundo plano
+   (fila "outbox"). Recebe alterações de outros dispositivos por consulta periódica. */
+class CloudAdapter {
+  constructor(tenantId) {
+    this.tenantId = tenantId;
+    this.local = new IDBAdapter('fichapro-nuvem-' + tenantId, [...STORES, 'outbox']);
+    this.kind = 'Nuvem (Supabase)';
+    this.cursorKey = 'fp_cursor_' + tenantId;
+    this.state = { online: navigator.onLine, pending: 0, lastSync: LS.get('fp_lastsync_' + tenantId), error: null, syncing: false };
+    this.listeners = new Set();
+    this.seq = 0;
+  }
+  async open() { await this.local.open(); await this.countPending(); return this; }
+  on(fn) { this.listeners.add(fn); }
+  emit() { this.listeners.forEach((fn) => fn(this.state)); }
+  async countPending() { this.state.pending = (await this.local.getAll('outbox')).length; this.emit(); }
+  guard() { if (!Tenants.status().canWrite) throw new CloudError(Tenants.status().roleOk ? 'Conta em modo só de leitura: ' + Tenants.status().label + '.' : 'O seu perfil neste estabelecimento é só de consulta.', 403, 'readonly'); }
+  getAll(store) { return this.local.getAll(store); }
+  async queue(entries) {
+    const stamp = Date.now() + '-' + ++this.seq;
+    await this.local.bulkPut('outbox', entries.map((e) => ({ id: e.store + '|' + e.id, store: e.store, rid: e.id, data: e.deleted ? {} : e.data, deleted: !!e.deleted, stamp })));
+    await this.countPending();
+    this.scheduleFlush();
+  }
+  async put(store, obj) { this.guard(); await this.local.put(store, obj); await this.queue([{ store, id: obj.id, data: obj }]); }
+  async bulkPut(store, arr) { this.guard(); await this.local.bulkPut(store, arr); await this.queue(arr.map((o) => ({ store, id: o.id, data: o }))); }
+  async delete(store, id) { this.guard(); await this.local.delete(store, id); await this.queue([{ store, id, deleted: true }]); }
+  async bulkDelete(store, ids) { this.guard(); await this.local.bulkDelete(store, ids); await this.queue(ids.map((id) => ({ store, id, deleted: true }))); }
+  async clear(store) { this.guard(); const ids = (await this.local.getAll(store)).map((o) => o.id); await this.local.clear(store); if (ids.length) await this.queue(ids.map((id) => ({ store, id, deleted: true }))); }
+  scheduleFlush(ms = 400) { clearTimeout(this._ft); this._ft = setTimeout(() => this.flush(), ms); }
+
+  /** Envia a fila pendente. */
+  async flush() {
+    if (this._flushing) { this._again = true; return; }
+    if (!navigator.onLine) { this.state.online = false; this.emit(); return; }
+    this._flushing = true;
+    try {
+      let items = await this.local.getAll('outbox');
+      while (items.length) {
+        const batch = items.slice(0, 200);
+        await Api.req('fp_records?on_conflict=tenant_id,store,id', { method: 'POST', prefer: 'resolution=merge-duplicates,return=minimal', body: batch.map((o) => ({ tenant_id: this.tenantId, store: o.store, id: o.rid, data: o.data, deleted: o.deleted })) });
+        // remove só as entradas que não mudaram entretanto
+        const now = new Map((await this.local.getAll('outbox')).map((o) => [o.id, o.stamp]));
+        await this.local.bulkDelete('outbox', batch.filter((o) => now.get(o.id) === o.stamp).map((o) => o.id));
+        items = items.slice(200);
+      }
+      this.state.error = null; this.state.online = true;
+      this.state.lastSync = U.nowISO(); LS.set('fp_lastsync_' + this.tenantId, this.state.lastSync);
+    } catch (e) {
+      this.state.error = e.message; this.state.online = e.code !== 'offline';
+      if (e.code === 'forbidden') { toast('A nuvem recusou a gravação: ' + e.message, 'err'); }
+      else this.scheduleFlush(15000);
+    } finally {
+      this._flushing = false;
+      await this.countPending();
+      if (this._again) { this._again = false; this.scheduleFlush(50); }
+    }
+  }
+
+  /** Recebe alterações feitas noutros dispositivos. */
+  async pull() {
+    if (!navigator.onLine) { this.state.online = false; this.emit(); return 0; }
+    if (this._pulling) return 0;
+    this._pulling = true; this.state.syncing = true; this.emit();
+    let total = 0;
+    try {
+      const saved = LS.get(this.cursorKey);
+      let cursor = saved, offset = 0;
+      const since = saved ? '&updated_at=gt.' + encodeURIComponent(new Date(new Date(saved).getTime() - 3000).toISOString()) : '&deleted=eq.false';
+      for (;;) {
+        const rows = await Api.req(`fp_records?select=store,id,data,deleted,updated_at&tenant_id=eq.${this.tenantId}${since}&order=updated_at.asc,store.asc,id.asc&limit=1000&offset=${offset}`);
+        const pending = new Set((await this.local.getAll('outbox')).map((o) => o.id));
+        const changes = rows.filter((r) => STORES.includes(r.store) && !pending.has(r.store + '|' + r.id)).map((r) => ({ store: r.store, id: r.id, data: r.data, deleted: r.deleted }));
+        for (const st of STORES) {
+          const ch = changes.filter((c) => c.store === st);
+          const up = ch.filter((c) => !c.deleted).map((c) => c.data), del = ch.filter((c) => c.deleted).map((c) => c.id);
+          if (up.length) await this.local.bulkPut(st, up);
+          if (del.length) await this.local.bulkDelete(st, del);
+        }
+        const fresh = changes.filter((c) => { const cur = Repo.get(c.store, c.id); return c.deleted ? !!cur : JSON.stringify(cur) !== JSON.stringify(c.data); });
+        if (fresh.length) Repo.applyRemote(fresh);
+        total += fresh.length;
+        for (const r of rows) if (!cursor || r.updated_at > cursor) cursor = r.updated_at;
+        if (rows.length < 1000) break;
+        offset += 1000;
+      }
+      LS.set(this.cursorKey, cursor);
+      this.state.online = true; this.state.error = null;
+      this.state.lastSync = U.nowISO(); LS.set('fp_lastsync_' + this.tenantId, this.state.lastSync);
+    } catch (e) {
+      this.state.error = e.message; this.state.online = e.code !== 'offline';
+      if (e.status === 401) Sync.sessionLost();
+    } finally { this._pulling = false; this.state.syncing = false; this.emit(); }
+    return total;
+  }
+  async syncNow() { await this.flush(); return this.pull(); }
+}
+
+/* ---------------------------- Coordenação da sincronização ---------------------------- */
+const Sync = {
+  mode() { return LS.get('fp_mode'); },
+  setMode(m) { LS.set('fp_mode', m); },
+  adapter: null,
+  start(adapter) {
+    this.adapter = adapter;
+    adapter.on(() => this.render());
+    const tick = () => { if (document.visibilityState === 'visible') adapter.syncNow(); };
+    this._iv = setInterval(tick, 20000);
+    window.addEventListener('online', () => { adapter.state.online = true; adapter.syncNow(); });
+    window.addEventListener('offline', () => { adapter.state.online = false; adapter.emit(); });
+    document.addEventListener('visibilitychange', tick);
+    adapter.flush();
+    this.render();
+  },
+  render() {
+    const el = $('#syncBadge'); if (!el) return;
+    if (!this.adapter) { el.innerHTML = ''; return; }
+    const s = this.adapter.state;
+    const [cls, txt] = !s.online ? ['amber', 'Sem ligação' + (s.pending ? ` · ${s.pending} por enviar` : '')] : s.error ? ['red', 'Erro de sincronização'] : s.pending || s.syncing ? ['blue', 'A sincronizar…'] : ['green', 'Sincronizado'];
+    el.innerHTML = `<span class="badge ${cls}" title="${h(s.error || (s.lastSync ? 'Última sincronização: ' + U.fmtDateTime(s.lastSync) : ''))}">● ${h(txt)}</span>`;
+  },
+  sessionLost() { if (this._lost) return; this._lost = true; toast('A sessão expirou. Entre novamente para continuar a sincronizar.', 'err'); },
+};
 
 /* =====================================================================
    MÓDULO 4 — DADOS DE DEMONSTRAÇÃO (preços fictícios)
@@ -1458,9 +1743,12 @@ function renderNav() {
   const cur = (location.hash.slice(2) || 'dashboard').split('/')[0];
   const active = cur === 'ficha' ? 'fichas' : cur;
   $('#nav').innerHTML = NAV.map(([k, l], i) => `<a href="#/${k}" class="${k === active ? 'active' : ''}"><span class="n">${i + 1}</span>${h(l)}</a>`).join('');
-  $('#sideFoot').innerHTML = `Armazenamento: ${h(Repo.kind)}${Repo.persisted ? ' (persistente)' : ''}<br>Dados guardados neste navegador.`;
+  $('#sideFoot').innerHTML = Sync.mode() === 'cloud' && Tenants.current
+    ? `<b style="color:#fff">${h(Tenants.current.name)}</b><br>${h(Auth.user ? Auth.user.email : '')}<br>Dados na nuvem, sincronizados.`
+    : `Armazenamento: ${h(Repo.kind)}${Repo.persisted ? ' (persistente)' : ''}<br>Dados guardados só neste navegador.`;
 }
-async function route() {
+async function route(keepScroll = false) {
+  const y = window.scrollY;
   const parts = (location.hash.slice(2) || 'dashboard').split('/');
   const key = parts[0];
   const view = Views[key] || Views.dashboard;
@@ -1473,7 +1761,7 @@ async function route() {
   el.innerHTML = '';
   try { await view(el, parts.slice(1)); }
   catch (e) { console.error(e); el.innerHTML = `<div class="alert err">Ocorreu um erro ao abrir esta secção: ${h(e.message)}</div>`; }
-  window.scrollTo(0, 0);
+  window.scrollTo(0, keepScroll ? y : 0);
 }
 let lastHash = location.hash;
 window.addEventListener('hashchange', async () => {
@@ -1503,6 +1791,212 @@ function backupDownload() {
 }
 
 /* =====================================================================
+   ENTRADA: escolha de modo, conta, estabelecimento + gestão da conta/equipa
+   ===================================================================== */
+const Gate = (() => {
+  const el = () => $('#gate');
+  const show = (html) => { $('#app').style.display = 'none'; el().hidden = false; el().innerHTML = `<div class="gate-card"><div class="gate-brand"><span class="dot"></span>FichaPro<small>Fichas técnicas &amp; Food Cost</small></div>${html}</div>`; const f = $('input', el()); if (f) f.focus(); };
+  const hide = () => { el().hidden = true; el().innerHTML = ''; $('#app').style.display = ''; };
+  const busy = (btn, on, label) => { if (!btn) return; btn.disabled = on; if (on) { btn.dataset.l = btn.textContent; btn.textContent = label || 'Aguarde…'; } else if (btn.dataset.l) btn.textContent = btn.dataset.l; };
+  const msg = (text, cls = 'err') => { const m = $('#gateMsg', el()); if (m) m.innerHTML = text ? `<div class="alert ${cls}">${text}</div>` : ''; };
+
+  function welcome() {
+    return new Promise((resolve) => {
+      show(`<h2>Bem-vindo</h2><p class="muted">Como quer usar a aplicação?</p>
+        <button class="btn primary gate-big" id="gCloud"><b>Entrar ou criar conta</b><span>Dados na nuvem, sincronizados entre computador, tablet e telemóvel. Pode convidar a sua equipa.</span></button>
+        <button class="btn gate-big" id="gLocal"><b>Usar só neste dispositivo</b><span>Sem conta. Os dados ficam apenas neste navegador. Pode ativar a conta mais tarde.</span></button>`);
+      $('#gCloud', el()).onclick = () => { Sync.setMode('cloud'); resolve('cloud'); };
+      $('#gLocal', el()).onclick = () => { Sync.setMode('local'); hide(); resolve('local'); };
+    });
+  }
+
+  function auth(tab = 'login', info = '') {
+    return new Promise((resolve) => {
+      const render = () => {
+        show(`<div class="tabs" style="margin-bottom:16px"><button data-t="login" class="${tab === 'login' ? 'active' : ''}">Entrar</button><button data-t="signup" class="${tab === 'signup' ? 'active' : ''}">Criar conta</button></div>
+          <div id="gateMsg">${info ? `<div class="alert ok">${info}</div>` : ''}</div>
+          <form id="gForm" class="grid" style="gap:10px">
+            <div class="field"><label>Email</label><input type="email" name="email" autocomplete="email" required value="${h(LS.get('fp_last_email') || '')}"></div>
+            <div class="field"><label>Palavra-passe</label><input type="password" name="password" autocomplete="${tab === 'login' ? 'current-password' : 'new-password'}" required minlength="6"></div>
+            ${tab === 'signup' ? '<div class="field"><label>Repetir palavra-passe</label><input type="password" name="password2" autocomplete="new-password" required minlength="6"></div>' : ''}
+            <button class="btn primary" type="submit" style="justify-content:center;padding:10px">${tab === 'login' ? 'Entrar' : 'Criar conta'}</button>
+          </form>
+          <div class="gate-links">${tab === 'login' ? '<a href="#" id="gForgot">Esqueci-me da palavra-passe</a>' : '<span class="small muted">Inclui 30 dias de teste gratuito.</span>'}<a href="#" id="gBack">Usar sem conta</a></div>`);
+        $$('[data-t]', el()).forEach((b) => (b.onclick = () => { tab = b.dataset.t; info = ''; render(); }));
+        $('#gBack', el()).onclick = (e) => { e.preventDefault(); Sync.setMode('local'); location.reload(); };
+        const fg = $('#gForgot', el());
+        if (fg) fg.onclick = async (e) => {
+          e.preventDefault();
+          const email = $('[name=email]', el()).value.trim();
+          if (!email) { msg('Escreva primeiro o seu email.'); return; }
+          try { await Auth.recover(email); msg('Se existir uma conta com este email, receberá um link para definir uma nova palavra-passe.', 'ok'); } catch (err) { msg(h(err.message)); }
+        };
+        $('#gForm', el()).onsubmit = async (e) => {
+          e.preventDefault();
+          const f = readForm(e.target); const btn = $('button[type=submit]', el());
+          const email = f.email.trim().toLowerCase();
+          if (tab === 'signup' && f.password !== f.password2) { msg('As palavras-passe não coincidem.'); return; }
+          busy(btn, true); msg('');
+          try {
+            LS.set('fp_last_email', email);
+            if (tab === 'login') { await Auth.signIn(email, f.password); resolve(); }
+            else {
+              const r = await Auth.signUp(email, f.password);
+              if (r.confirmed) resolve();
+              else { tab = 'login'; info = `Conta criada. Enviámos um email para <b>${h(email)}</b>: clique no link de confirmação e depois entre aqui.`; render(); }
+            }
+          } catch (err) { msg(h(err.message)); busy(btn, false); }
+        };
+      };
+      render();
+    });
+  }
+
+  function newPassword() {
+    return new Promise((resolve) => {
+      show(`<h2>Nova palavra-passe</h2><div id="gateMsg"></div><form id="gForm" class="grid" style="gap:10px">
+        <div class="field"><label>Nova palavra-passe</label><input type="password" name="p1" minlength="6" required autocomplete="new-password"></div>
+        <div class="field"><label>Repetir</label><input type="password" name="p2" minlength="6" required autocomplete="new-password"></div>
+        <button class="btn primary" type="submit" style="justify-content:center;padding:10px">Guardar</button></form>`);
+      $('#gForm', el()).onsubmit = async (e) => {
+        e.preventDefault(); const f = readForm(e.target);
+        if (f.p1 !== f.p2) { msg('As palavras-passe não coincidem.'); return; }
+        try { await Auth.updatePassword(f.p1); toast('Palavra-passe alterada', 'ok'); resolve(); } catch (err) { msg(h(err.message)); }
+      };
+    });
+  }
+
+  /** Escolher ou criar estabelecimento. Devolve { id, demo, upload }. */
+  function tenants(localCount = 0) {
+    return new Promise((resolve) => {
+      const list = Tenants.list;
+      show(`<h2>${list.length ? 'Escolha o estabelecimento' : 'Crie o seu estabelecimento'}</h2>
+        <div class="small muted" style="margin-bottom:10px">Sessão: ${h(Auth.user.email)} · <a href="#" id="gOut">terminar sessão</a></div>
+        ${list.length ? `<div class="grid" style="gap:8px;margin-bottom:16px">${list.map((t) => `<button class="btn gate-big" data-id="${t.id}"><b>${h(t.name)}</b><span>${h(Tenants.roleLabel(t.role))} · ${h(Tenants.status(t).label)}</span></button>`).join('')}</div><h3>Ou criar um novo</h3>` : '<p class="muted">Cada estabelecimento tem os seus próprios ingredientes, fichas e equipa.</p>'}
+        <div id="gateMsg"></div>
+        <form id="gForm" class="grid" style="gap:10px">
+          <div class="field"><label>Nome do estabelecimento</label><input name="name" required maxlength="120" placeholder="ex.: Restaurante Don Tasko"></div>
+          ${localCount ? `<label class="check"><input type="checkbox" name="upload" checked> Enviar os ${localCount} registos que já existem neste dispositivo</label>` : ''}
+          <label class="check"><input type="checkbox" name="demo" ${localCount ? '' : 'checked'}> Carregar dados de demonstração (pode apagá-los depois)</label>
+          <button class="btn primary" type="submit" style="justify-content:center;padding:10px">Criar estabelecimento</button>
+        </form>`);
+      $('#gOut', el()).onclick = async (e) => { e.preventDefault(); await Auth.signOut(); location.reload(); };
+      $$('[data-id]', el()).forEach((b) => (b.onclick = () => resolve({ id: b.dataset.id })));
+      $('#gForm', el()).onsubmit = async (e) => {
+        e.preventDefault(); const f = readForm(e.target); const btn = $('button[type=submit]', el());
+        busy(btn, true, 'A criar…');
+        try { const id = await Tenants.create(f.name.trim()); await Tenants.load(); resolve({ id, demo: f.demo, upload: f.upload, name: f.name.trim() }); }
+        catch (err) { msg(h(err.message)); busy(btn, false); }
+      };
+    });
+  }
+  function loading(text) { show(`<div class="empty">${h(text)}</div>`); }
+  return { welcome, auth, newPassword, tenants, loading, hide };
+})();
+
+async function localRecordCount() {
+  try {
+    const a = await new IDBAdapter(LOCAL_DB_NAME).open();
+    let n = 0; for (const s of ['ingredients', 'recipes', 'staff', 'equipment', 'opcosts']) n += (await a.getAll(s)).filter((o) => !o.demo).length;
+    a.db.close(); return n;
+  } catch { return 0; }
+}
+async function localExport() {
+  const a = await new IDBAdapter(LOCAL_DB_NAME).open();
+  const out = { app: 'fichas-tecnicas-hotelaria', schema: SCHEMA_VERSION, exportedAt: U.nowISO(), data: {} };
+  for (const s of STORES) out.data[s] = (await a.getAll(s)).filter((o) => !o.demo); // só dados reais
+  a.db.close(); return out;
+}
+
+/** Arranque no modo nuvem. Devolve false se não foi possível continuar. */
+async function startCloud() {
+  if (!Auth.session) await Gate.auth();
+  for (;;) {
+    try { await Tenants.load(); break; }
+    catch (e) {
+      if (e.code === 'offline' && Tenants.loadCached().length) { toast('Sem ligação: a trabalhar com os dados guardados neste dispositivo.'); break; }
+      if (e.status === 401) { await Gate.auth('login', 'A sessão expirou. Entre novamente.'); continue; }
+      Gate.loading('Não foi possível ligar à nuvem: ' + e.message); return false;
+    }
+  }
+  let choice = null;
+  let id = Tenants.savedId();
+  if (!id || !Tenants.list.some((t) => t.id === id)) {
+    if (Tenants.list.length === 1) id = Tenants.list[0].id;
+    else { choice = await Gate.tenants(await localRecordCount()); id = choice.id; }
+  }
+  Tenants.select(id);
+  Gate.loading('A carregar os dados de ' + Tenants.current.name + '…');
+  const adapter = new CloudAdapter(id);
+  await Repo.init(adapter);
+  if (!LS.get(adapter.cursorKey)) await adapter.pull();
+  if (choice && choice.name) {
+    await saveSettings({ businessName: choice.name, firstRun: U.nowISO() });
+    if (choice.upload) { const d = await localExport(); d.data.meta = (d.data.meta || []).map((m) => (m.id === 'settings' ? { ...m, businessName: choice.name } : m)); await Repo.importAll(d, 'merge'); toast('Dados deste dispositivo enviados para a conta', 'ok'); }
+    if (choice.demo) await Demo.load();
+  }
+  Sync.start(adapter);
+  Gate.hide();
+  return true;
+}
+
+/* ---------------------------- Cartão "Conta e sincronização" ---------------------------- */
+async function renderAccountCard(box) {
+  if (Sync.mode() !== 'cloud') {
+    box.innerHTML = `<div class="card-h"><h3>Sincronização entre dispositivos</h3></div>
+      <p>Os dados estão guardados apenas neste dispositivo. Com uma conta, ficam na nuvem e pode usá-los no computador, tablet e telemóvel, e convidar a equipa.</p>
+      <button class="btn green" id="acOn">Ativar conta na nuvem</button>
+      <div class="help">Os dados atuais podem ser enviados para a conta quando criar o estabelecimento. Nada é apagado deste dispositivo.</div>`;
+    $('#acOn', box).onclick = () => { Sync.setMode('cloud'); location.reload(); };
+    return;
+  }
+  const t = Tenants.current, st = Tenants.status(), a = Sync.adapter, admin = ['owner', 'admin'].includes(Tenants.role);
+  box.innerHTML = `<div class="card-h"><h3>Conta e sincronização</h3><span id="acSync"></span></div>
+    <div class="sumrow"><span>Sessão</span><span>${h(Auth.user.email)}</span></div>
+    <div class="sumrow"><span>Estabelecimento</span><span><b>${h(t.name)}</b> · ${h(Tenants.roleLabel(t.role))}</span></div>
+    <div class="sumrow"><span>Subscrição</span><span class="${st.canWrite ? '' : 'red'}">${h(st.label)}</span></div>
+    <div class="sumrow"><span>Por enviar</span><span>${a.state.pending} alteração(ões)</span></div>
+    <div class="sumrow"><span>Última sincronização</span><span>${U.fmtDateTime(a.state.lastSync)}</span></div>
+    ${a.state.error ? `<div class="alert err" style="margin-top:8px">${h(a.state.error)}</div>` : ''}
+    <div class="toolbar" style="margin-top:12px"><button class="btn primary" id="acSyncNow">Sincronizar agora</button>${admin ? '<button class="btn" id="acRename">Mudar nome</button>' : ''}<button class="btn" id="acSwitch">Mudar/criar estabelecimento</button><button class="btn" id="acOut">Terminar sessão</button><button class="btn danger" id="acLocal">Usar sem conta</button></div>
+    ${admin ? '<div class="sep"></div><h4>Equipa</h4><div id="acTeam" class="small muted">A carregar…</div>' : ''}`;
+  const sync = () => { $('#acSync', box) && ($('#acSync', box).innerHTML = $('#syncBadge').innerHTML); };
+  sync();
+  $('#acSyncNow', box).onclick = async () => { const n = await a.syncNow(); toast(a.state.error ? 'Erro: ' + a.state.error : `Sincronizado (${n} alteração(ões) recebida(s))`, a.state.error ? 'err' : 'ok'); renderAccountCard(box); };
+  $('#acOut', box).onclick = async () => {
+    if (a.state.pending && !(await confirmDlg(`Há ${a.state.pending} alteração(ões) ainda por enviar. Se terminar a sessão agora, ficam guardadas neste dispositivo e são enviadas quando voltar a entrar. Continuar?`))) return;
+    await Auth.signOut(); location.reload();
+  };
+  $('#acSwitch', box).onclick = () => { LS.set('fp_tenant_' + Auth.user.id, null); location.reload(); };
+  $('#acLocal', box).onclick = async () => { if (await confirmDlg('Passar a usar a aplicação sem conta neste dispositivo? Verá os dados locais (não os da nuvem). Os dados da nuvem não são apagados.', { ok: 'Usar sem conta' })) { Sync.setMode('local'); location.reload(); } };
+  const rn = $('#acRename', box);
+  if (rn) rn.onclick = () => {
+    const m = modal({ title: 'Nome do estabelecimento', size: 'small', body: `<div class="field"><label>Nome</label><input id="rnv" value="${h(t.name)}" maxlength="120"></div>`, footer: '<button class="btn" data-close>Cancelar</button><button class="btn primary" id="rnok">Guardar</button>' });
+    m.$('#rnok').onclick = async () => { const v = m.$('#rnv').value.trim(); if (!v) return; try { await Api.rpc('fp_rename_tenant', { t: t.id, p_name: v }); await Tenants.load(); Tenants.select(t.id); m.close(); toast('Nome alterado', 'ok'); renderAccountCard(box); } catch (e) { toast(e.message, 'err'); } };
+  };
+  if (!admin) return;
+  try {
+    const [mem, inv] = await Promise.all([Api.req(`fp_members?tenant_id=eq.${t.id}&select=user_id,email,role&order=created_at`), Api.req(`fp_invites?tenant_id=eq.${t.id}&accepted_at=is.null&select=id,email,role,created_at`)]);
+    const roles = [['admin', 'Administrador'], ['editor', 'Editor'], ['viewer', 'Só consulta']];
+    $('#acTeam', box).classList.remove('small', 'muted');
+    $('#acTeam', box).innerHTML = `<div class="table-wrap"><table><thead><tr><th>Email</th><th>Função</th><th></th></tr></thead><tbody>
+      ${mem.map((m) => `<tr><td>${h(m.email || m.user_id)}${m.user_id === Auth.user.id ? ' <span class="badge gray">eu</span>' : ''}</td><td>${m.role === 'owner' ? 'Proprietário' : `<select data-role="${m.user_id}">${options(roles, m.role)}</select>`}</td><td>${m.role === 'owner' ? '' : `<button class="btn sm danger" data-rm="${m.user_id}">Remover</button>`}</td></tr>`).join('')}
+      ${inv.map((i) => `<tr><td>${h(i.email)} <span class="badge amber">convite pendente</span></td><td>${h(Tenants.roleLabel(i.role))}</td><td><button class="btn sm" data-cancel="${i.id}">Cancelar</button></td></tr>`).join('')}
+      </tbody></table></div>
+      <form id="invF" class="toolbar" style="margin-top:10px"><input type="email" name="email" placeholder="email@exemplo.pt" required style="flex:1;min-width:180px"><select name="role">${options(roles, 'editor')}</select><button class="btn green" type="submit">Convidar</button></form>
+      <div class="help">A pessoa convidada cria uma conta (ou entra) com este email e passa a ter acesso automaticamente. Editor: cria e altera dados. Só consulta: vê, sem alterar.</div>`;
+    $$('[data-role]', box).forEach((s) => (s.onchange = async () => { try { await Api.rpc('fp_set_member_role', { t: t.id, u: s.dataset.role, p_role: s.value }); toast('Função alterada', 'ok'); } catch (e) { toast(e.message, 'err'); } }));
+    $$('[data-rm]', box).forEach((b) => (b.onclick = async () => { if (!(await confirmDlg('Remover este utilizador do estabelecimento?', { danger: true, ok: 'Remover' }))) return; try { await Api.rpc('fp_remove_member', { t: t.id, u: b.dataset.rm }); renderAccountCard(box); } catch (e) { toast(e.message, 'err'); } }));
+    $$('[data-cancel]', box).forEach((b) => (b.onclick = async () => { try { await Api.req('fp_invites?id=eq.' + b.dataset.cancel, { method: 'DELETE' }); renderAccountCard(box); } catch (e) { toast(e.message, 'err'); } }));
+    $('#invF', box).onsubmit = async (e) => {
+      e.preventDefault(); const f = readForm(e.target);
+      try { await Api.req('fp_invites', { method: 'POST', body: { tenant_id: t.id, email: f.email.trim().toLowerCase(), role: f.role }, prefer: 'return=minimal' }); toast('Convite registado. Avise a pessoa para criar conta com este email.', 'ok'); renderAccountCard(box); }
+      catch (err) { toast(/duplicate|unique/i.test(err.message) ? 'Já existe um convite pendente para este email.' : err.message, 'err'); }
+    };
+  } catch (e) { $('#acTeam', box).textContent = 'Não foi possível carregar a equipa: ' + e.message; }
+}
+
+/* =====================================================================
    VISTAS — Dashboard, Ingredientes, Importação
    ===================================================================== */
 
@@ -1529,6 +2023,7 @@ Views.dashboard = (el) => {
   ] : [];
   const fcItems = priced.map((x) => ({ label: x.r.name, value: x.p.current.foodCostPct })).sort((a, b) => b.value - a.value).slice(0, 15);
   el.innerHTML = `
+    ${Sync.mode() === 'cloud' && !Tenants.status().canWrite ? `<div class="alert err"><b>Modo só de leitura.</b> ${h(Tenants.status().roleOk ? Tenants.status().label + '. Pode consultar os dados, mas não gravar alterações.' : 'O seu perfil neste estabelecimento é de consulta.')}</div>` : Sync.mode() === 'cloud' && Tenants.status().trialOk && Tenants.status().trialLeft <= 7 ? `<div class="alert warn">${h(Tenants.status().label)}.</div>` : ''}
     ${Demo.has() ? `<div class="alert info">Está a ver <b>dados de demonstração</b> (preços fictícios). Pode eliminá-los em <a href="#/configuracoes">Configurações</a> sem afetar os seus dados.</div>` : ''}
     ${!ings.length && !all.length ? `<div class="card"><h2>Bem-vindo</h2><p>Comece por <a href="#/importacao">importar os seus ingredientes</a> ou <a href="#/ingredientes">criá-los manualmente</a>. Para explorar a aplicação, pode <button class="btn sm green" id="loadDemo">carregar dados de demonstração</button>.</p></div>` : ''}
     <div class="kpis">
@@ -1555,7 +2050,7 @@ Views.dashboard = (el) => {
       </div>
     </div>
     ${(() => { const errs = all.filter((x) => x.c.errors.length); return errs.length ? `<div class="alert err"><b>${errs.length} ficha(s) com erros de dados</b> (custos possivelmente incompletos): ${errs.slice(0, 6).map((x) => `<a href="#/ficha/${x.r.id}">${h(x.r.name)}</a>`).join(', ')}</div>` : ''; })()}
-    ${!st.lastBackup || U.daysSince(st.lastBackup) > 14 ? `<div class="alert warn">Os dados estão guardados apenas neste navegador. ${st.lastBackup ? 'A última cópia de segurança foi há ' + U.daysSince(st.lastBackup) + ' dias.' : 'Ainda não exportou nenhuma cópia de segurança.'} <button class="btn sm" id="dashBackup">Exportar agora</button></div>` : ''}
+    ${Sync.mode() !== 'cloud' && (!st.lastBackup || U.daysSince(st.lastBackup) > 14) ? `<div class="alert warn">Os dados estão guardados apenas neste navegador. ${st.lastBackup ? 'A última cópia de segurança foi há ' + U.daysSince(st.lastBackup) + ' dias.' : 'Ainda não exportou nenhuma cópia de segurança.'} <button class="btn sm" id="dashBackup">Exportar agora</button></div>` : ''}
   `;
   const ld = $('#loadDemo', el); if (ld) ld.onclick = async () => { await Demo.load(); toast('Dados de demonstração carregados', 'ok'); route(); };
   const db = $('#dashBackup', el); if (db) db.onclick = () => { backupDownload(); route(); };
@@ -2652,7 +3147,7 @@ Views.simulador = (el) => {
 /* ------------------------------ 11. CONFIGURAÇÕES ------------------------------ */
 Views.configuracoes = (el) => {
   const st = getSettings();
-  el.innerHTML = `<div class="grid g2">
+  el.innerHTML = `<div class="card" id="acct"></div><div class="grid g2">
     <div class="card"><div class="card-h"><h3>Negócio e preços</h3></div><form id="cfg"><div class="fields">
       <div class="field" style="grid-column:1/-1"><label>Nome do estabelecimento (aparece nos relatórios)</label><input name="businessName" value="${h(st.businessName)}"></div>
       <div class="field"><label>Food Cost pretendido padrão (%)</label>${numInput('targetFC', st.targetFC)}</div>
@@ -2672,13 +3167,14 @@ Views.configuracoes = (el) => {
       <button class="btn primary" id="catSave" style="margin-top:8px">Guardar categorias</button></div></div>
     <div class="grid g2">
     <div class="card"><div class="card-h"><h3>Cópias de segurança</h3></div>
-      <p>Os dados ficam guardados neste navegador (${h(Repo.kind)}). Limpar os dados do navegador apaga-os: exporte cópias regularmente.${st.lastBackup ? ` Última exportação: ${U.fmtDateTime(st.lastBackup)}.` : ''}</p>
+      <p>${Sync.mode() === 'cloud' ? 'Os dados estão na nuvem. Uma cópia exportada continua a ser útil como arquivo independente.' : `Os dados ficam guardados neste navegador (${h(Repo.kind)}). Limpar os dados do navegador apaga-os: exporte cópias regularmente.`}${st.lastBackup ? ` Última exportação: ${U.fmtDateTime(st.lastBackup)}.` : ''}</p>
       <div class="toolbar"><button class="btn primary" id="bkExp">⤓ Exportar cópia (.json)</button><label class="btn">⤒ Importar cópia<input type="file" id="bkImp" accept=".json,application/json" hidden></label>
       <select id="bkMode"><option value="replace">Substituir todos os dados</option><option value="merge">Juntar aos dados atuais</option></select></div></div>
     <div class="card"><div class="card-h"><h3>Dados de demonstração</h3></div>
       <p>${Demo.has() ? 'Existem dados de demonstração carregados (assinalados com DEMO).' : 'Não há dados de demonstração.'}</p>
       <div class="toolbar"><button class="btn green" id="demoLoad">Carregar demonstração</button><button class="btn danger" id="demoDel" ${Demo.has() ? '' : 'disabled'}>Eliminar dados de demonstração</button></div>
       <div class="sep"></div><h4>Zona de perigo</h4><button class="btn danger" id="wipe">Apagar todos os dados</button></div></div>`;
+  renderAccountCard($('#acct', el));
   $('#cfgSave', el).onclick = async () => {
     const v = readForm($('#cfg', el)); const bad = [];
     if (!(v.targetFC > 0 && v.targetFC < 100)) bad.push('targetFC');
@@ -2839,17 +3335,35 @@ Views.relatorios = (el) => {
 };
 
 /* ------------------------------ ARRANQUE ------------------------------ */
+window.addEventListener('unhandledrejection', (e) => { const m = e.reason && e.reason.message; if (m) toast(m, 'err'); });
 (async function boot() {
   $('#view').innerHTML = '<div class="empty">A carregar…</div>';
-  try { await Repo.init(); }
-  catch (e) { $('#view').innerHTML = `<div class="alert err">Não foi possível abrir o armazenamento local: ${h(e.message)}</div>`; return; }
-  const st = Repo.get('meta', 'settings');
-  if (!st) { await saveSettings({ firstRun: U.nowISO() }); if (!Repo.all('ingredients').length && !Repo.all('recipes').length) await Demo.load(); }
-  Repo.on(() => {});
+  try {
+    const red = await Auth.handleRedirect();
+    if (red && red.error) toast('Link inválido ou expirado: ' + red.error, 'err');
+    else if (red) { Sync.setMode('cloud'); if (red.type === 'recovery') await Gate.newPassword(); else toast('Email confirmado', 'ok'); }
+  } catch (e) { toast(e.message, 'err'); }
+  let mode = Sync.mode();
+  if (!mode) mode = await Gate.welcome();
+  if (mode === 'cloud') { if (!(await startCloud())) return; }
+  else {
+    try { await Repo.init(); }
+    catch (e) { $('#view').innerHTML = `<div class="alert err">Não foi possível abrir o armazenamento local: ${h(e.message)}</div>`; return; }
+    if (!Repo.get('meta', 'settings')) { await saveSettings({ firstRun: U.nowISO() }); if (!Repo.all('ingredients').length && !Repo.all('recipes').length) await Demo.load(); }
+  }
+  // alterações vindas de outros dispositivos: atualiza o ecrã sem interromper quem está a escrever
+  let pendingRender = false;
+  const rerender = () => {
+    const busy = $('.modal-bg') || (document.activeElement && document.activeElement.closest('#view') && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName));
+    if (UI.current === 'ficha') { if (!UI.dirty) { pendingRender = false; route(true); } else toast('Esta ficha foi alterada noutro dispositivo. Ao guardar, a sua versão substitui a outra.'); return; }
+    if (busy) { pendingRender = true; return; }
+    pendingRender = false; route(true);
+  };
+  Repo.on((type) => { if (type === 'remote') rerender(); });
+  document.addEventListener('focusout', () => setTimeout(() => { if (pendingRender) rerender(); }, 300));
   $('#menuBtn').onclick = () => $('#sidebar').classList.toggle('open');
   $('#quickBackup').onclick = backupDownload;
   document.addEventListener('click', (e) => { if (window.innerWidth <= 820 && !e.target.closest('#sidebar') && !e.target.closest('#menuBtn')) $('#sidebar').classList.remove('open'); });
-  window.addEventListener('storage', () => {});
   route();
 })();
 
