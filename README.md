@@ -24,6 +24,21 @@ Na primeira abertura são carregados dados de demonstração (preços fictícios
 - 10 relatórios com impressão/PDF, Excel e CSV
 - Cópias de segurança (exportar/importar JSON)
 
+## Estrutura do repositório
+
+| Pasta | Conteúdo |
+|---|---|
+| `index.html` | A aplicação completa (gerada por `./build.sh` a partir de `src/`) |
+| `src/` | Código-fonte por módulos (motor de cálculo, Excel, base de dados, nuvem, ponte Android, ecrãs) |
+| `android/` | Projeto Android Studio (WebView + Google Play Billing + AdMob) — ver `android/README.md` |
+| `supabase/` | Esquema da base de dados, migrações e Edge Function `play-billing` |
+| `tests/` | Testes automáticos (motor, fluxos, nuvem simulada, ponte Android simulada) |
+
+## Planos
+
+- **Gratuito**: até 10 fichas técnicas e 50 ingredientes; anúncios na app Android.
+- **Pro** (subscrição Google Play): ilimitado, sem anúncios, equipa com vários utilizadores. Vale em todos os dispositivos do estabelecimento, incluindo o navegador.
+
 ## Avisos
 
 - Os dados ficam apenas no navegador onde a aplicação é usada. Exporte cópias de segurança regularmente.

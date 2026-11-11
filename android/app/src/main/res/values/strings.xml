@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">FichaPro</string>
+    <string name="save_cancelled">Gravação cancelada</string>
+    <string name="no_browser">Não foi possível abrir o link</string>
+</resources>

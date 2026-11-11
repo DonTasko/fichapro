@@ -1,0 +1,19 @@
+[versions]
+agp = "9.1.1"
+coreKtx = "1.16.0"
+appcompat = "1.7.1"
+activity = "1.10.1"
+webkit = "1.14.0"
+billing = "9.1.0"
+playServicesAds = "25.5.0"
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+androidx-activity = { group = "androidx.activity", name = "activity-ktx", version.ref = "activity" }
+androidx-webkit = { group = "androidx.webkit", name = "webkit", version.ref = "webkit" }
+billing = { group = "com.android.billingclient", name = "billing", version.ref = "billing" }
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }

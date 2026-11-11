@@ -993,6 +993,10 @@ const IO = (() => {
   }
 
   function download(blob, filename) {
+    if (typeof Native !== 'undefined' && Native.ok) {
+      Native.saveFile(blob, filename).then((r) => r && toast('Ficheiro guardado', 'ok')).catch((e) => { if (!/cancel/i.test(e.message)) toast(e.message, 'err'); });
+      return;
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
     a.download = filename;
@@ -1166,6 +1170,7 @@ function dataView(overrides) {
 const Services = (() => {
   /** Grava um ingrediente. Se o custo unitário mudar, regista histórico com impacto nas fichas. */
   async function saveIngredient(ing, { source = 'manual' } = {}) {
+    if (!ing.demo) Plan.check('ingredients', ing.id);
     const prev = ing.id ? Repo.get('ingredients', ing.id) : null;
     const settings = getSettings();
     ing.id = ing.id || U.uid();
@@ -1198,6 +1203,7 @@ const Services = (() => {
   }
   /** Grava ficha e guarda uma versão (snapshot) com o custo nesse momento. */
   async function saveRecipe(rec, note = '') {
+    if (!rec.demo) Plan.check('recipes', rec.id);
     rec.updatedAt = U.nowISO();
     if (!rec.createdAt) rec.createdAt = rec.updatedAt;
     rec.version = (Number(rec.version) || 0) + 1;
@@ -1307,7 +1313,8 @@ const Api = {
     const j = txt ? JSON.parse(txt) : null;
     if (!r.ok) {
       const code = j && j.code;
-      if (code === '42501' || r.status === 403) throw new CloudError('Sem permissão para gravar (conta em modo de consulta ou período de teste terminado).', 403, 'forbidden');
+      if (code === '42501' || r.status === 403) throw new CloudError('Sem permissão para esta operação.', 403, 'forbidden');
+      if (j && j.message && j.message.startsWith('FP_LIMIT')) throw new CloudError('Limite do plano gratuito atingido. Subscreva o plano Pro.', r.status, 'limit');
       throw new CloudError((j && (j.message || j.hint)) || 'Erro do servidor (' + r.status + ')', r.status, code);
     }
     return j;
@@ -1337,14 +1344,10 @@ const Tenants = {
   savedId() { return Auth.user ? LS.get('fp_tenant_' + Auth.user.id) : null; },
   async create(name) { return Api.rpc('fp_create_tenant', { p_name: name }); },
   status(t = this.current) {
-    if (!t) return { canWrite: false, label: '—' };
-    const now = Date.now();
+    if (!t) return { canWrite: false, roleOk: false, paid: false, label: '—' };
     const roleOk = ['owner', 'admin', 'editor'].includes(t.role);
-    const paid = t.plan === 'active' || (t.paid_until && new Date(t.paid_until).getTime() > now);
-    const trialLeft = Math.ceil((new Date(t.trial_ends_at).getTime() - now) / 86400000);
-    const trialOk = t.plan === 'trial' && trialLeft > 0;
-    let label = paid ? 'Subscrição ativa' : trialOk ? `Período de teste: ${trialLeft} dia(s) restantes` : t.plan === 'trial' ? 'Período de teste terminado' : t.plan === 'past_due' ? 'Pagamento em atraso' : 'Subscrição cancelada';
-    return { canWrite: roleOk && (paid || trialOk), roleOk, paid, trialOk, trialLeft, label };
+    const paid = !!t.paid_until && new Date(t.paid_until).getTime() > Date.now();
+    return { canWrite: roleOk, roleOk, paid, label: paid ? 'Plano Pro' : t.plan === 'past_due' ? 'Plano gratuito (pagamento Pro pendente)' : 'Plano gratuito' };
   },
   roleLabel: (r) => ({ owner: 'Proprietário', admin: 'Administrador', editor: 'Editor', viewer: 'Só consulta' }[r] || r),
 };
@@ -1366,7 +1369,7 @@ class CloudAdapter {
   on(fn) { this.listeners.add(fn); }
   emit() { this.listeners.forEach((fn) => fn(this.state)); }
   async countPending() { this.state.pending = (await this.local.getAll('outbox')).length; this.emit(); }
-  guard() { if (!Tenants.status().canWrite) throw new CloudError(Tenants.status().roleOk ? 'Conta em modo só de leitura: ' + Tenants.status().label + '.' : 'O seu perfil neste estabelecimento é só de consulta.', 403, 'readonly'); }
+  guard() { if (!Tenants.status().canWrite) throw new CloudError('O seu perfil neste estabelecimento é só de consulta.', 403, 'readonly'); }
   getAll(store) { return this.local.getAll(store); }
   async queue(entries) {
     const stamp = Date.now() + '-' + ++this.seq;
@@ -1473,6 +1476,139 @@ const Sync = {
   },
   sessionLost() { if (this._lost) return; this._lost = true; toast('A sessão expirou. Entre novamente para continuar a sincronizar.', 'err'); },
 };
+
+/* =====================================================================
+   MÓDULO 3C — APP ANDROID (ponte nativa) E PLANOS (Gratuito / Pro)
+   Na app Android existe window.FichaProAndroid (interface Java/Kotlin).
+   No navegador, Native.ok = false e tudo funciona como site normal.
+   ===================================================================== */
+const Native = (() => {
+  const b = typeof window !== 'undefined' ? window.FichaProAndroid : null;
+  const ok = !!b;
+  let seq = 0;
+  const pend = {};
+  const purchaseListeners = new Set();
+  // chamado pelo lado Android através de evaluateJavascript
+  window.FichaProNative = {
+    resolve(id, payload) {
+      const p = pend[id]; if (!p) return; delete pend[id];
+      let r; try { r = typeof payload === 'string' ? JSON.parse(payload) : payload; } catch { r = { error: 'Resposta inválida' }; }
+      if (r && r.error) p.rej(new Error(r.error)); else p.res(r ? r.data : null);
+    },
+    purchases(payload) { let list = []; try { list = JSON.parse(payload); } catch {} purchaseListeners.forEach((fn) => fn(list)); },
+  };
+  function call(method, ...args) {
+    if (!ok) return Promise.reject(new Error('Disponível apenas na app Android'));
+    return new Promise((res, rej) => {
+      const id = String(++seq);
+      pend[id] = { res, rej };
+      setTimeout(() => { if (pend[id]) { delete pend[id]; rej(new Error('Sem resposta da app (' + method + ')')); } }, 120000);
+      try { b[method](id, ...args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a)))); } catch (e) { delete pend[id]; rej(e); }
+    });
+  }
+  const blobToBase64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = rej; r.readAsDataURL(blob); });
+  let lastInterstitial = 0;
+  return {
+    ok,
+    info() { try { return ok ? JSON.parse(b.info()) : null; } catch { return null; } },
+    setAds(on) { if (ok) try { b.setAds(!!on); } catch {} },
+    maybeInterstitial() { if (!ok || Plan.isPro()) return; if (Date.now() - lastInterstitial < 4 * 60000) return; lastInterstitial = Date.now(); try { b.showInterstitial(); } catch {} },
+    call,
+    print(title) { if (ok) b.print(String(title || 'Documento')); },
+    async saveFile(blob, name) { const data = await blobToBase64(blob); return call('saveFile', name, blob.type || 'application/octet-stream', data); },
+    products() { return call('getProducts'); },
+    purchase(basePlanId, accountId, profileId) { return call('purchase', basePlanId, accountId, profileId); },
+    queryPurchases() { return call('queryPurchases'); },
+    manageSubscriptions() { if (ok) b.manageSubscriptions(); },
+    privacyRequired() { try { return ok && !!b.privacyOptionsRequired(); } catch { return false; } },
+    privacyOptions() { if (ok) try { b.privacyOptions(); } catch {} },
+    onPurchases(fn) { purchaseListeners.add(fn); },
+  };
+})();
+
+/* ---------------------------- Planos ---------------------------- */
+const Plan = {
+  LIMITS: { recipes: 10, ingredients: 50 },
+  LABELS: { recipes: 'fichas técnicas', ingredients: 'ingredientes' },
+  isPro() { return Sync.mode() === 'cloud' && !!Tenants.current && Tenants.status().paid; },
+  usage(store) { return Repo.all(store).filter((o) => !o.demo).length; },
+  /** Lança erro se criar um novo registo ultrapassar o limite do plano gratuito. */
+  check(store, id) {
+    const lim = this.LIMITS[store];
+    if (!lim || this.isPro()) return;
+    if (id && Repo.get(store, id)) return; // alteração de registo existente
+    if (this.usage(store) >= lim) throw new Error(`O plano gratuito permite até ${lim} ${this.LABELS[store]}. Subscreva o FichaPro Pro para ter registos ilimitados (Configurações → Plano).`);
+  },
+  syncAds() { Native.setAds(!this.isPro()); },
+};
+
+/* ---------------------------- Subscrição Google Play ---------------------------- */
+const Billing = {
+  /** Envia a compra para validação no servidor (Edge Function), que confirma junto da Google e ativa o plano. */
+  async verify(p) {
+    const token = await Auth.token();
+    const r = await fetch(CLOUD.url + '/functions/v1/play-billing/verify', { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: CLOUD.key, Authorization: 'Bearer ' + token }, body: JSON.stringify({ purchaseToken: p.purchaseToken, productId: p.productId, tenantId: Tenants.current.id }) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'Falha na validação da compra (' + r.status + ')');
+    await Tenants.load(); Tenants.select(Tenants.current.id); Plan.syncAds();
+    return j;
+  },
+  /** Ao arrancar na app Android: valida compras que ficaram por confirmar (ex.: sem rede no momento). */
+  async reconcile() {
+    if (!Native.ok || Sync.mode() !== 'cloud' || !Tenants.current) return;
+    try {
+      const list = await Native.queryPurchases();
+      for (const p of list || []) if (!p.acknowledged && (!p.accountId || p.accountId === Tenants.current.id)) await this.verify(p).catch(() => {});
+    } catch {}
+  },
+};
+Native.onPurchases(async (list) => {
+  for (const p of list || []) {
+    try { await Billing.verify(p); toast('Subscrição Pro ativa. Obrigado!', 'ok'); }
+    catch (e) { toast('A compra foi feita mas não foi possível ativá-la ainda: ' + e.message + '. Será tentada de novo automaticamente.', 'err'); }
+  }
+  if (UI.current === 'configuracoes') route(true);
+});
+
+async function renderPlanCard(box) {
+  const pro = Plan.isPro();
+  const t = Tenants.current;
+  const usage = Object.keys(Plan.LIMITS).map((s) => `<div class="sumrow"><span>${h(Plan.LABELS[s][0].toUpperCase() + Plan.LABELS[s].slice(1))}</span><span>${Plan.usage(s)}${pro ? '' : ' / ' + Plan.LIMITS[s]}</span></div>`).join('');
+  let action = '';
+  if (pro) {
+    action = `<div class="alert ok">Plano <b>Pro</b> ativo${t.paid_until ? ' até ' + U.fmtDate(t.paid_until) + ' (renova automaticamente, salvo cancelamento)' : ''}. Sem anúncios e sem limites.</div>${Native.ok ? '<button class="btn" id="plManage">Gerir subscrição no Google Play</button>' : ''}`;
+  } else if (Sync.mode() !== 'cloud') {
+    action = '<div class="help">Para subscrever o plano Pro, ative primeiro a conta na nuvem (cartão acima). A subscrição fica associada ao estabelecimento e vale em todos os dispositivos.</div>';
+  } else if (!['owner', 'admin'].includes(Tenants.role)) {
+    action = '<div class="help">Só o proprietário ou um administrador do estabelecimento pode subscrever.</div>';
+  } else if (!Native.ok) {
+    action = '<div class="help">A subscrição Pro é feita na app <b>FichaPro para Android</b> (Google Play). Depois de subscrever lá, o plano Pro fica ativo também aqui, no navegador.</div>';
+  } else {
+    action = '<div id="plOffers" class="small muted">A carregar preços do Google Play…</div><button class="btn sm" id="plRestore" style="margin-top:8px">Restaurar compra</button>';
+  }
+  box.innerHTML = `<div class="card-h"><h3>Plano: ${pro ? 'Pro' : 'Gratuito'}</h3>${pro ? '<span class="badge green">Pro</span>' : '<span class="badge gray">Gratuito</span>'}</div>
+    ${usage}
+    <div class="help">Gratuito: até ${Plan.LIMITS.recipes} fichas técnicas e ${Plan.LIMITS.ingredients} ingredientes (os dados de demonstração não contam), com anúncios na app Android. Pro: ilimitado, sem anúncios, equipa com vários utilizadores.</div>
+    ${action}
+    ${Native.privacyRequired() && !pro ? '<button class="btn sm" id="plPrivacy" style="margin-top:8px">Privacidade dos anúncios</button>' : ''}`;
+  const pv = $('#plPrivacy', box); if (pv) pv.onclick = () => Native.privacyOptions();
+  const mg = $('#plManage', box); if (mg) mg.onclick = () => Native.manageSubscriptions();
+  const rs = $('#plRestore', box); if (rs) rs.onclick = async () => { try { const l = await Native.queryPurchases(); if (!l || !l.length) { toast('Não foi encontrada nenhuma subscrição nesta conta Google.'); return; } for (const p of l) await Billing.verify(p); toast('Subscrição restaurada', 'ok'); route(true); } catch (e) { toast(e.message, 'err'); } };
+  const offers = $('#plOffers', box);
+  if (offers) {
+    try {
+      const list = await Native.products();
+      if (!list || !list.length) { offers.textContent = 'Não há planos disponíveis de momento. Tente mais tarde.'; return; }
+      offers.classList.remove('small', 'muted');
+      offers.innerHTML = `<div class="tiers">${list.map((o) => `<div class="tier ${o.basePlanId.includes('anual') ? 'rec' : ''}"><h3>${h(o.title || o.basePlanId)}</h3><div class="price">${h(o.price)}</div><div class="small muted">${h(o.period)}${o.freeTrial ? ' · ' + h(o.freeTrial) : ''}</div><button class="btn green" data-bp="${h(o.basePlanId)}" style="margin-top:8px;width:100%">Subscrever</button></div>`).join('')}</div>
+        <div class="small muted" style="margin-top:6px">Pagamento e renovação geridos pelo Google Play. Pode cancelar a qualquer momento nas subscrições do Google Play.</div>`;
+      $$('[data-bp]', offers).forEach((b) => (b.onclick = async () => {
+        try { await Native.purchase(b.dataset.bp, Tenants.current.id, Auth.user.id); }
+        catch (e) { if (!/cancel/i.test(e.message)) toast(e.message, 'err'); }
+      }));
+    } catch (e) { offers.textContent = 'Não foi possível obter os preços: ' + e.message; }
+  }
+}
 
 /* =====================================================================
    MÓDULO 4 — DADOS DE DEMONSTRAÇÃO (preços fictícios)
@@ -1724,6 +1860,13 @@ function lineChart(points, { height = 160 } = {}) {
 
 /* ---------- Impressão / PDF ---------- */
 function printHTML(html, title = 'Documento') {
+  if (Native.ok) {
+    const css = [...document.querySelectorAll('style')].map((s) => s.textContent).join('\n');
+    const doc = `<!DOCTYPE html><html lang="pt-PT"><head><meta charset="UTF-8"><title>${h(title)}</title><style>${css}\n#print-area{display:block!important}body{background:#fff}</style></head><body class="printing"><div id="print-area"><div class="print-doc">${html}</div></div></body></html>`;
+    Native.call('printHtml', title, doc).catch((e) => toast(e.message, 'err'));
+    setTimeout(() => Native.maybeInterstitial(), 1500);
+    return;
+  }
   const pa = $('#print-area');
   pa.innerHTML = `<div class="print-doc">${html}</div>`;
   const old = document.title; document.title = title;
@@ -1734,6 +1877,7 @@ function printHTML(html, title = 'Documento') {
 }
 const fileStamp = () => U.todayISO();
 function exportRows(kind, name, sheets) {
+  setTimeout(() => Native.maybeInterstitial(), 1500);
   if (kind === 'xlsx') IO.download(IO.writeXlsx(sheets), `${name}_${fileStamp()}.xlsx`);
   else IO.download(new Blob([IO.toCSV(sheets[0].rows)], { type: 'text/csv;charset=utf-8' }), `${name}_${fileStamp()}.csv`);
 }
@@ -1821,7 +1965,7 @@ const Gate = (() => {
             ${tab === 'signup' ? '<div class="field"><label>Repetir palavra-passe</label><input type="password" name="password2" autocomplete="new-password" required minlength="6"></div>' : ''}
             <button class="btn primary" type="submit" style="justify-content:center;padding:10px">${tab === 'login' ? 'Entrar' : 'Criar conta'}</button>
           </form>
-          <div class="gate-links">${tab === 'login' ? '<a href="#" id="gForgot">Esqueci-me da palavra-passe</a>' : '<span class="small muted">Inclui 30 dias de teste gratuito.</span>'}<a href="#" id="gBack">Usar sem conta</a></div>`);
+          <div class="gate-links">${tab === 'login' ? '<a href="#" id="gForgot">Esqueci-me da palavra-passe</a>' : '<span class="small muted">Plano gratuito disponível.</span>'}<a href="#" id="gBack">Usar sem conta</a></div>`);
         $$('[data-t]', el()).forEach((b) => (b.onclick = () => { tab = b.dataset.t; info = ''; render(); }));
         $('#gBack', el()).onclick = (e) => { e.preventDefault(); Sync.setMode('local'); location.reload(); };
         const fg = $('#gForgot', el());
@@ -1983,7 +2127,8 @@ async function renderAccountCard(box) {
       ${mem.map((m) => `<tr><td>${h(m.email || m.user_id)}${m.user_id === Auth.user.id ? ' <span class="badge gray">eu</span>' : ''}</td><td>${m.role === 'owner' ? 'Proprietário' : `<select data-role="${m.user_id}">${options(roles, m.role)}</select>`}</td><td>${m.role === 'owner' ? '' : `<button class="btn sm danger" data-rm="${m.user_id}">Remover</button>`}</td></tr>`).join('')}
       ${inv.map((i) => `<tr><td>${h(i.email)} <span class="badge amber">convite pendente</span></td><td>${h(Tenants.roleLabel(i.role))}</td><td><button class="btn sm" data-cancel="${i.id}">Cancelar</button></td></tr>`).join('')}
       </tbody></table></div>
-      <form id="invF" class="toolbar" style="margin-top:10px"><input type="email" name="email" placeholder="email@exemplo.pt" required style="flex:1;min-width:180px"><select name="role">${options(roles, 'editor')}</select><button class="btn green" type="submit">Convidar</button></form>
+      ${Plan.isPro() ? '' : '<div class="alert info" style="margin-top:10px">Convidar outras pessoas é uma funcionalidade do plano Pro.</div>'}
+      <form id="invF" class="toolbar" style="margin-top:10px;${Plan.isPro() ? '' : 'display:none'}"><input type="email" name="email" placeholder="email@exemplo.pt" required style="flex:1;min-width:180px"><select name="role">${options(roles, 'editor')}</select><button class="btn green" type="submit">Convidar</button></form>
       <div class="help">A pessoa convidada cria uma conta (ou entra) com este email e passa a ter acesso automaticamente. Editor: cria e altera dados. Só consulta: vê, sem alterar.</div>`;
     $$('[data-role]', box).forEach((s) => (s.onchange = async () => { try { await Api.rpc('fp_set_member_role', { t: t.id, u: s.dataset.role, p_role: s.value }); toast('Função alterada', 'ok'); } catch (e) { toast(e.message, 'err'); } }));
     $$('[data-rm]', box).forEach((b) => (b.onclick = async () => { if (!(await confirmDlg('Remover este utilizador do estabelecimento?', { danger: true, ok: 'Remover' }))) return; try { await Api.rpc('fp_remove_member', { t: t.id, u: b.dataset.rm }); renderAccountCard(box); } catch (e) { toast(e.message, 'err'); } }));
@@ -2023,7 +2168,8 @@ Views.dashboard = (el) => {
   ] : [];
   const fcItems = priced.map((x) => ({ label: x.r.name, value: x.p.current.foodCostPct })).sort((a, b) => b.value - a.value).slice(0, 15);
   el.innerHTML = `
-    ${Sync.mode() === 'cloud' && !Tenants.status().canWrite ? `<div class="alert err"><b>Modo só de leitura.</b> ${h(Tenants.status().roleOk ? Tenants.status().label + '. Pode consultar os dados, mas não gravar alterações.' : 'O seu perfil neste estabelecimento é de consulta.')}</div>` : Sync.mode() === 'cloud' && Tenants.status().trialOk && Tenants.status().trialLeft <= 7 ? `<div class="alert warn">${h(Tenants.status().label)}.</div>` : ''}
+    ${Sync.mode() === 'cloud' && !Tenants.status().canWrite ? '<div class="alert err"><b>Modo só de leitura.</b> O seu perfil neste estabelecimento é de consulta: pode ver os dados, mas não alterá-los.</div>' : ''}
+    ${!Plan.isPro() && Object.keys(Plan.LIMITS).some((s) => Plan.usage(s) >= Plan.LIMITS[s] * 0.8) ? `<div class="alert warn">Plano gratuito: ${Object.keys(Plan.LIMITS).map((s) => `${Plan.usage(s)}/${Plan.LIMITS[s]} ${Plan.LABELS[s]}`).join(' · ')}. <a href="#/configuracoes">Ver plano Pro</a></div>` : ''}
     ${Demo.has() ? `<div class="alert info">Está a ver <b>dados de demonstração</b> (preços fictícios). Pode eliminá-los em <a href="#/configuracoes">Configurações</a> sem afetar os seus dados.</div>` : ''}
     ${!ings.length && !all.length ? `<div class="card"><h2>Bem-vindo</h2><p>Comece por <a href="#/importacao">importar os seus ingredientes</a> ou <a href="#/ingredientes">criá-los manualmente</a>. Para explorar a aplicação, pode <button class="btn sm green" id="loadDemo">carregar dados de demonstração</button>.</p></div>` : ''}
     <div class="kpis">
@@ -2435,6 +2581,8 @@ Views.importacao = (el) => {
   $('#impGo', el).onclick = async () => {
     const todo = items.filter((x) => x.action !== 'skip' && !x.errs.length);
     if (!todo.length) { toast('Nada para importar', 'err'); return; }
+    const nCreate = todo.filter((x) => x.action === 'create').length;
+    if (!Plan.isPro() && Plan.usage('ingredients') + nCreate > Plan.LIMITS.ingredients) { toast(`O plano gratuito permite até ${Plan.LIMITS.ingredients} ingredientes (tem ${Plan.usage('ingredients')} e está a criar ${nCreate}). Subscreva o plano Pro ou importe menos linhas.`, 'err'); return; }
     const dupNew = todo.filter((x) => x.action === 'create' && (x.dup || x.dupInFile !== null)).length;
     if (dupNew && !(await confirmDlg(`${dupNew} linha(s) serão criadas apesar de parecerem duplicadas. Continuar?`, { ok: 'Continuar' }))) return;
     let created = 0, updated = 0, recalc = new Set();
@@ -3147,7 +3295,7 @@ Views.simulador = (el) => {
 /* ------------------------------ 11. CONFIGURAÇÕES ------------------------------ */
 Views.configuracoes = (el) => {
   const st = getSettings();
-  el.innerHTML = `<div class="card" id="acct"></div><div class="grid g2">
+  el.innerHTML = `<div class="grid g2" style="align-items:start"><div class="card" id="acct"></div><div class="card" id="plan"></div></div><div class="grid g2">
     <div class="card"><div class="card-h"><h3>Negócio e preços</h3></div><form id="cfg"><div class="fields">
       <div class="field" style="grid-column:1/-1"><label>Nome do estabelecimento (aparece nos relatórios)</label><input name="businessName" value="${h(st.businessName)}"></div>
       <div class="field"><label>Food Cost pretendido padrão (%)</label>${numInput('targetFC', st.targetFC)}</div>
@@ -3175,6 +3323,7 @@ Views.configuracoes = (el) => {
       <div class="toolbar"><button class="btn green" id="demoLoad">Carregar demonstração</button><button class="btn danger" id="demoDel" ${Demo.has() ? '' : 'disabled'}>Eliminar dados de demonstração</button></div>
       <div class="sep"></div><h4>Zona de perigo</h4><button class="btn danger" id="wipe">Apagar todos os dados</button></div></div>`;
   renderAccountCard($('#acct', el));
+  renderPlanCard($('#plan', el));
   $('#cfgSave', el).onclick = async () => {
     const v = readForm($('#cfg', el)); const bad = [];
     if (!(v.targetFC > 0 && v.targetFC < 100)) bad.push('targetFC');
@@ -3360,6 +3509,9 @@ window.addEventListener('unhandledrejection', (e) => { const m = e.reason && e.r
     pendingRender = false; route(true);
   };
   Repo.on((type) => { if (type === 'remote') rerender(); });
+  Plan.syncAds();
+  Billing.reconcile();
+  if (Native.ok) document.body.classList.add('native-app');
   document.addEventListener('focusout', () => setTimeout(() => { if (pendingRender) rerender(); }, 300));
   $('#menuBtn').onclick = () => $('#sidebar').classList.toggle('open');
   $('#quickBackup').onclick = backupDownload;
