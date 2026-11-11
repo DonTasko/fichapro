@@ -40,7 +40,9 @@ const Auth = (() => {
     return j;
   }
   const fromToken = (j) => ({ access_token: j.access_token, refresh_token: j.refresh_token, expires_at: Math.floor(Date.now() / 1000) + (Number(j.expires_in) || 3600), user: { id: j.user.id, email: j.user.email } });
-  const redirectTo = () => location.origin + location.pathname;
+  // Links dos emails (confirmação, recuperação) abrem no navegador: na app Android ou num ficheiro local usa-se o site público
+  const PUBLIC_URL = 'https://dontasko.github.io/fichapro/';
+  const redirectTo = () => (/^https?:$/.test(location.protocol) && location.hostname !== 'appassets.androidplatform.net' && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? location.origin + location.pathname : PUBLIC_URL);
   return {
     get session() { return session; },
     get user() { return session && session.user; },
