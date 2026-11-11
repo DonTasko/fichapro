@@ -1,5 +1,5 @@
 -- FichaPro: plano Gratuito (anúncios + limites) e Pro (subscrição Google Play)
--- (ainda por aplicar no projeto: pendente de confirmação)
+-- Aplicada em 2026-11-11 (MasterTable). Depois: revoke execute on function public.fp_enforce_limits() from authenticated;
 alter table public.fp_tenants drop constraint if exists fp_tenants_plan_check;
 alter table public.fp_tenants add constraint fp_tenants_plan_check check (plan in ('free','trial','active','past_due','canceled'));
 alter table public.fp_tenants alter column plan set default 'free';
@@ -52,3 +52,4 @@ revoke all on public.fp_subscriptions from anon;
 
 revoke execute on function public.fp_is_pro(uuid), public.fp_enforce_limits() from anon, public;
 grant execute on function public.fp_is_pro(uuid) to authenticated;
+revoke execute on function public.fp_enforce_limits() from authenticated;

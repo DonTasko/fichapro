@@ -17,6 +17,8 @@ const SERVICE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const PKG = Deno.env.get("PLAY_PACKAGE_NAME") ?? "pt.lappsstudio.fichapro";
 const RTDN_KEY = Deno.env.get("RTDN_KEY") ?? "";
 
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type",
@@ -133,6 +135,7 @@ async function handleVerify(req: Request) {
   const user = await u.json();
   const { purchaseToken, tenantId } = await req.json().catch(() => ({}));
   if (!purchaseToken || !tenantId) return json({ error: "Pedido incompleto" }, 400);
+  if (!UUID.test(tenantId)) return json({ error: "Estabelecimento inválido" }, 400);
   const mem = await db(`fp_members?tenant_id=eq.${tenantId}&user_id=eq.${user.id}&select=role`);
   if (!mem.length || !["owner", "admin"].includes(mem[0].role)) return json({ error: "Só o proprietário ou um administrador pode ativar a subscrição" }, 403);
   const sub = await getSubscription(purchaseToken);
@@ -155,7 +158,7 @@ async function handleRtdn(req: Request, url: URL) {
     const ex = await db(`fp_subscriptions?purchase_token=eq.${encodeURIComponent(n.purchaseToken)}&select=tenant_id`);
     tenantId = ex[0]?.tenant_id;
   }
-  if (!tenantId) return json({ ok: true, ignored: "sem estabelecimento" });
+  if (!tenantId || !UUID.test(tenantId)) return json({ ok: true, ignored: "sem estabelecimento" });
   const t = await db(`fp_tenants?id=eq.${tenantId}&select=id`);
   if (!t.length) return json({ ok: true, ignored: "estabelecimento inexistente" });
   return json({ ok: true, ...(await apply(n.purchaseToken, sub, tenantId, null)) });
