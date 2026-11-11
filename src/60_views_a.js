@@ -147,7 +147,7 @@ function ingredientForm(ing, after) {
     body: `<form id="ingf" autocomplete="off">
       ${i.demo ? '<div class="alert info">Registo de demonstração (preço fictício).</div>' : ''}
       <div class="fields">
-        <div class="field"><label>Código interno</label><input name="code" value="${h(i.code || '')}"></div>
+        <div class="field"><label>Código interno</label><input name="code" value="${h(i.code || (i.id ? '' : nextIngredientCode()))}" placeholder="${h(tr('Automático'))}"></div>
         <div class="field" style="grid-column:span 2"><label>Nome do ingrediente *</label><input name="name" value="${h(i.name || '')}" required></div>
         <div class="field"><label>Categoria</label><input name="category" list="dl-cat" value="${h(i.category || '')}"><datalist id="dl-cat">${cats.map((c) => `<option value="${h(c)}">`).join('')}</datalist></div>
         <div class="field"><label>Fornecedor</label><input name="supplier" list="dl-sup" value="${h(i.supplier || '')}"><datalist id="dl-sup">${sups.map((c) => `<option value="${h(c)}">`).join('')}</datalist></div>

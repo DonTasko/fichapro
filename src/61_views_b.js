@@ -4,8 +4,7 @@
 const REC_TYPES = [['prato', 'Prato'], ['entrada', 'Entrada'], ['acompanhamento', 'Acompanhamento'], ['sobremesa', 'Sobremesa'], ['bebida', 'Bebida'], ['molho', 'Molho'], ['base', 'Preparação base / intermédia'], ['pastelaria', 'Pastelaria'], ['artigo', 'Outro artigo']];
 const typeLabel = (t) => (REC_TYPES.find((x) => x[0] === t) || [, t || '—'])[1];
 function nextRecipeCode() {
-  const n = Math.max(0, ...Repo.all('recipes').map((r) => { const m = /^FT-(\d+)$/.exec(r.code || ''); return m ? +m[1] : 0; }));
-  return 'FT-' + String(n + 1).padStart(3, '0');
+  return nextCode('recipes', 'FT', 3);
 }
 function newRecipe() {
   return { id: U.uid(), code: nextRecipeCode(), name: '', category: 'Pratos principais', type: 'prato', sellable: true, intermediate: false, portions: 1, finalQty: null, finalUnit: 'kg', prepMin: 0, cookMin: 0, platingMin: 0, cleanMin: 0, laborIncludeCook: true, temperature: '', notes: '', lines: [], labor: { mode: 'simultaneo', lines: [{ staffId: 'avg', count: 1 }] }, equipment: [], extras: [], allergenOverrides: { add: [], remove: [], traces: [], confirmed: false }, targetFC: null, vatRate: null, salePrice: null, version: 0, _new: true };
@@ -163,7 +162,7 @@ function renderTab() {
       box.innerHTML = `<div class="grid" style="grid-template-columns:minmax(0,1fr) 220px">
         <div class="fields">
           <div class="field" style="grid-column:1/-1"><label>Nome do prato ou produto *</label><input data-bind="name" value="${h(r.name)}" placeholder="ex.: Picanha grelhada"></div>
-          <div class="field"><label>Código interno</label><input data-bind="code" value="${h(r.code || '')}"></div>
+          <div class="field"><label>Código interno</label><input data-bind="code" value="${h(r.code || '')}" placeholder="${h(tr('Automático'))}"></div>
           <div class="field"><label>Categoria (define o IVA de venda)</label><select data-bind="category">${options(cats, r.category)}</select></div>
           <div class="field"><label>Tipo</label><select data-bind="type">${options(REC_TYPES, r.type)}</select></div>
           <div class="field"><label>Número de doses produzidas *</label><input class="num" inputmode="decimal" data-bind="portions" value="${h(vNum(r.portions))}"></div>

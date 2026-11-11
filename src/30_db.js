@@ -161,6 +161,14 @@ function dataView(overrides) {
   return { ingredients: Repo.map('ingredients'), recipes, staff: Repo.map('staff'), equipment: Repo.map('equipment'), opcosts: Repo.all('opcosts'), settings: getSettings() };
 }
 
+/* ---------- Códigos internos automáticos (MP-0001 ingredientes, FT-001 fichas) ---------- */
+function nextCode(store, prefix, pad) {
+  const re = new RegExp('^' + prefix + '-(\\d+)$');
+  const n = Math.max(0, ...Repo.all(store).map((x) => { const m = re.exec(x.code || ''); return m ? +m[1] : 0; }));
+  return prefix + '-' + String(n + 1).padStart(pad, '0');
+}
+const nextIngredientCode = () => nextCode('ingredients', 'MP', 4);
+
 /* ---------- Serviços de domínio com histórico ---------- */
 const Services = (() => {
   /** Grava um ingrediente. Se o custo unitário mudar, regista histórico com impacto nas fichas. */
@@ -169,6 +177,7 @@ const Services = (() => {
     const prev = ing.id ? Repo.get('ingredients', ing.id) : null;
     const settings = getSettings();
     ing.id = ing.id || U.uid();
+    if (!String(ing.code || '').trim()) ing.code = (prev && prev.code) || nextIngredientCode();
     let entry = null;
     if (prev) {
       const oldC = Calc.ingredientUnitCost(prev, settings).cost;
@@ -199,6 +208,7 @@ const Services = (() => {
   /** Grava ficha e guarda uma versão (snapshot) com o custo nesse momento. */
   async function saveRecipe(rec, note = '') {
     if (!rec.demo) Plan.check('recipes', rec.id);
+    if (!String(rec.code || '').trim()) rec.code = nextCode('recipes', 'FT', 3);
     rec.updatedAt = U.nowISO();
     if (!rec.createdAt) rec.createdAt = rec.updatedAt;
     rec.version = (Number(rec.version) || 0) + 1;
